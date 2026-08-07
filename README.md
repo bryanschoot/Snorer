@@ -25,10 +25,10 @@ labels in `SharedPreferences`.
 - `lib/data/`: local metadata repository, PCM/WAV recorder, foreground service,
   TFLite model adapter, and audio playback.
 - `lib/presentation/`: `ChangeNotifier` view models, the recording interface,
-  and settings with persisted dark, light, and pink themes.
+  and settings with persisted dark, light, and Hurm themes.
 - `test/`: model, sound-detection, recording UI, and theme interaction tests.
 
-The settings screen lets users choose a dark, light, or pink theme. The choice
+The settings screen lets users choose a dark, light, or Hurm theme. The choice
 is stored locally and restored on the next launch.
 
 The release build falls back to Flutter's debug signing configuration when no

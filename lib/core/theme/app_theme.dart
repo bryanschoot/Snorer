@@ -6,7 +6,7 @@ extension SnorerThemeModeDetails on SnorerThemeMode {
   String get label => switch (this) {
     SnorerThemeMode.dark => 'Donker',
     SnorerThemeMode.light => 'Licht',
-    SnorerThemeMode.pink => 'Roze',
+    SnorerThemeMode.pink => 'Hurm',
   };
 
   String get description => switch (this) {

@@ -6,7 +6,7 @@ import 'package:snorer/presentation/settings/settings_screen.dart';
 import 'package:snorer/presentation/settings/theme_controller.dart';
 
 void main() {
-  testWidgets('selects and persists the pink theme', (tester) async {
+  testWidgets('selects and persists the Hurm theme', (tester) async {
     final preferences = _MemoryThemePreferences();
     final controller = ThemeController(preferences: preferences);
     await controller.initialize();
