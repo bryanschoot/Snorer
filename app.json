@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Snorer",
+    "slug": "snorer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "snorer",
+    "android": {
+      "package": "com.bryanschoot.snorer"
+    },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Snorer gebruikt je microfoon om slaapgeluiden lokaal op te nemen.",
+          "recordAudioAndroid": true,
+          "enableBackgroundRecording": true,
+          "enableBackgroundPlayback": true
+        }
+      ],
+      "expo-status-bar",
+      "expo-asset"
+    ]
+  }
+}
