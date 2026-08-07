@@ -54,7 +54,12 @@ jobs:
         run: |
           set -euo pipefail
           sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          # sdkmanager exits cleanly after consuming the licenses, while yes
+          # receives SIGPIPE when that happens. Keep pipefail for the real
+          # package installation but not for this expected license-pipe close.
+          set +o pipefail
           yes | "${sdkmanager}" --sdk_root="${ANDROID_HOME}" --licenses >/dev/null
+          set -o pipefail
           "${sdkmanager}" --sdk_root="${ANDROID_HOME}" \
             'platform-tools' \
             'platforms;android-36' \
