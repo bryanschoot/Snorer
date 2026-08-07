@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:record/record.dart';
-
+import '../../core/errors/snorer_error.dart';
 import '../../domain/models/recording.dart';
 import '../../domain/services/sound_detection.dart';
 import '../repositories/recording_repository.dart';
@@ -28,7 +28,7 @@ class AudioRecordingState {
   final AudioRecordingStatus status;
   final SoundDetectionStatus soundDetectionStatus;
   final double durationSeconds;
-  final String? error;
+  final SnorerError? error;
 
   bool get isRecording => status == AudioRecordingStatus.recording;
   bool get isBusy =>
@@ -40,7 +40,7 @@ class AudioRecordingState {
     AudioRecordingStatus? status,
     SoundDetectionStatus? soundDetectionStatus,
     double? durationSeconds,
-    String? error,
+    SnorerError? error,
     bool clearError = false,
   }) {
     return AudioRecordingState(
@@ -138,8 +138,7 @@ class DeviceAudioRecordingService implements AudioRecordingService {
           _state.copyWith(
             status: AudioRecordingStatus.idle,
             soundDetectionStatus: SoundDetectionStatus.idle,
-            error:
-                'Geef Snorer toegang tot de microfoon om slaapgeluiden lokaal op te nemen.',
+            error: const SnorerError(SnorerErrorCode.microphonePermission),
           ),
         );
         return RecordingStartResult.permissionDenied;
@@ -207,7 +206,10 @@ class DeviceAudioRecordingService implements AudioRecordingService {
         _state.copyWith(
           status: AudioRecordingStatus.error,
           soundDetectionStatus: SoundDetectionStatus.unavailable,
-          error: 'Opname starten lukt niet: ${_errorMessage(error)}',
+          error: SnorerError(
+            SnorerErrorCode.recordingStart,
+            detail: _errorMessage(error),
+          ),
         ),
       );
       return RecordingStartResult.failed;
@@ -235,7 +237,7 @@ class DeviceAudioRecordingService implements AudioRecordingService {
       final path = _audioPath;
       final startedAt = _startedAt;
       if (path == null || startedAt == null) {
-        throw StateError('De opname heeft geen geldig bestand opgeleverd.');
+        throw const SnorerError(SnorerErrorCode.recordingInvalidFile);
       }
       final durationSeconds =
           DateTime.now().difference(startedAt).inMilliseconds / 1000;
@@ -262,7 +264,12 @@ class DeviceAudioRecordingService implements AudioRecordingService {
       _setState(
         _state.copyWith(
           status: AudioRecordingStatus.error,
-          error: 'Opname stoppen lukt niet: ${_errorMessage(error)}',
+          error: error is SnorerError
+              ? error
+              : SnorerError(
+                  SnorerErrorCode.recordingStop,
+                  detail: _errorMessage(error),
+                ),
         ),
       );
       return null;

@@ -8,7 +8,9 @@ import 'data/services/audio_recording_service.dart';
 import 'data/services/foreground_recording_service.dart';
 import 'data/services/sound_model_service.dart';
 import 'presentation/recordings/recordings_view_model.dart';
+import 'data/services/language_preferences.dart';
 import 'data/services/theme_preferences.dart';
+import 'presentation/settings/language_controller.dart';
 import 'presentation/settings/theme_controller.dart';
 
 Future<void> main() async {
@@ -16,10 +18,11 @@ Future<void> main() async {
   FlutterForegroundTask.initCommunicationPort();
 
   final repository = LocalRecordingRepository();
+  final foregroundController = AndroidForegroundRecordingController();
   final recorder = DeviceAudioRecordingService(
     repository: repository,
     soundModel: YamnetSoundModelService(),
-    foregroundController: AndroidForegroundRecordingController(),
+    foregroundController: foregroundController,
   );
   final viewModel = RecordingsViewModel(
     repository: repository,
@@ -27,7 +30,21 @@ Future<void> main() async {
     player: JustAudioPlaybackService(),
   );
   final themeController = ThemeController(preferences: LocalThemePreferences());
+  final languageController = LanguageController(
+    preferences: LocalLanguagePreferences(),
+  );
   await themeController.initialize();
+  await languageController.initialize();
+  foregroundController.setLanguage(languageController.language);
+  languageController.addListener(() {
+    foregroundController.setLanguage(languageController.language);
+  });
 
-  runApp(SnorerApp(viewModel: viewModel, themeController: themeController));
+  runApp(
+    SnorerApp(
+      viewModel: viewModel,
+      themeController: themeController,
+      languageController: languageController,
+    ),
+  );
 }

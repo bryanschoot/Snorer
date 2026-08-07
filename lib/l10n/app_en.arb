@@ -1,0 +1,126 @@
+{
+  "@@locale": "en",
+  "settings": "Settings",
+  "headerTitle": "Sleep, made clear.",
+  "headerDescription": "Record your night and discover what happens. Everything stays on your phone.",
+  "local": "Local",
+  "deleteAllRecordings": "Delete all recordings",
+  "deleteRecordingTitle": "Delete recording?",
+  "deleteRecordingContent": "The local audio file and its entry will be removed from this device.",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "deleteAllTitle": "Delete all recordings?",
+  "deleteAllContent": "All local audio files and labels will be permanently removed from this device.",
+  "deleteAll": "Delete all",
+  "permissionTitle": "Microphone access is turned off",
+  "permissionBody": "Allow access before starting a sleep recording. Nothing is sent to a server.",
+  "recordingEyebrow": "SLEEP RECORDING",
+  "recordingTitle": "Tonight's recording",
+  "recordingBusy": "Recording",
+  "recordingReady": "Ready",
+  "recordingInProgressHint": "audio is saved locally",
+  "recordingReadyHint": "ready when you go to sleep",
+  "finishRecording": "Finishing recording…",
+  "stopRecording": "Stop recording",
+  "prepareMicrophone": "Preparing microphone…",
+  "startRecording": "Start sleep recording",
+  "foregroundServiceNote": "Android keeps the recording active with a visible system notification, even when your screen is locked.",
+  "detectionReady": "Snoring and speech are marked locally.",
+  "detectionLoading": "Preparing sound model…",
+  "detectionUnavailable": "Recording works, but sound labels are unavailable.",
+  "detectionIdle": "Sound labels are processed on this device only.",
+  "privacyTitle": "Private and local",
+  "privacyBody": "Audio and sound labels stay on your phone. Snorer uses no account, ads, or cloud analysis.",
+  "overviewEyebrow": "OVERVIEW",
+  "localRecordings": "Local recordings",
+  "recordingsCount": "{count, plural, =1{1 night} other{{count} nights}}",
+  "@recordingsCount": {
+    "description": "The number of recorded nights.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "emptyRecordingTitle": "Your first night will appear here",
+  "emptyRecordingBody": "Start a sleep recording before you go to bed. After stopping, the recording and local sound labels will appear here.",
+  "pauseRecording": "Pause recording",
+  "playRecording": "Play recording",
+  "noEvents": "No clear snoring or speech moments were detected.",
+  "deleteRecordingTooltip": "Delete recording",
+  "errorTitle": "Something went wrong",
+  "footerTitle": "Your data stays yours",
+  "footerBody": "Snorer works without an account, cloud sync, or ads. You decide when a recording is deleted.",
+  "settingsIntroTitle": "Your Snorer",
+  "settingsIntroBody": "Keep the app calm for the moment you use it.",
+  "appearance": "Appearance",
+  "language": "Language",
+  "languageHint": "Choose the app language.",
+  "privacy": "Privacy",
+  "privacyPhoneTitle": "Everything stays on your phone",
+  "privacyPhoneBody": "Recordings, labels, and sound analysis are stored locally. Snorer uses no account or cloud sync.",
+  "privacyMicrophoneTitle": "Microphone only while recording",
+  "privacyMicrophoneBody": "Android shows a notification while a sleep recording is active.",
+  "about": "About Snorer",
+  "aboutTitle": "Sleep, made clear and stored locally",
+  "aboutBody": "A simple sleep recorder without ads or an account.",
+  "themeDark": "Dark",
+  "themeLight": "Light",
+  "themeHurm": "Hurm",
+  "themeDarkDescription": "Calm for the night",
+  "themeLightDescription": "Bright during the day",
+  "themeHurmDescription": "Warm and soft",
+  "languageDutch": "Dutch",
+  "languageEnglish": "English",
+  "recordingLabelSnoring": "Snoring",
+  "recordingLabelSpeech": "Speech",
+  "recordingLabelNone": "Not labeled yet",
+  "snoringMoments": "{count, plural, =1{1 snoring moment} other{{count} snoring moments}}",
+  "@snoringMoments": {
+    "description": "The number of detected snoring moments.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "speechMoments": "{count, plural, =1{1 speech moment} other{{count} speech moments}}",
+  "@speechMoments": {
+    "description": "The number of detected speech moments.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursUnit": "h",
+  "durationMinutesUnit": "m",
+  "durationSecondsUnit": "s",
+  "notificationChannelName": "Snorer recording",
+  "notificationChannelDescription": "Shows when Snorer is recording during the night.",
+  "notificationTitle": "Snorer is recording",
+  "notificationText": "Sleep sounds are stored locally.",
+  "errorMicrophonePermission": "Allow Snorer to access the microphone to record sleep sounds locally.",
+  "errorRecordingStart": "Could not start recording",
+  "errorRecordingStop": "Could not stop recording",
+  "errorRecordingInvalidFile": "The recording did not produce a valid file.",
+  "errorPlaybackLoad": "Could not prepare playback",
+  "errorPlayback": "Could not play recording",
+  "errorPlaybackSeek": "Could not seek to this moment",
+  "errorLibraryLoad": "Could not read local recording history.",
+  "errorDeleteRecording": "This recording could not be removed from the device.",
+  "errorDeleteAllRecordings": "Not all local recordings could be removed.",
+  "errorPersistRecording": "The recording was created, but the local index could not be updated.",
+  "errorWithDetail": "{message}: {detail}",
+  "@errorWithDetail": {
+    "description": "An error message with technical detail.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      },
+      "detail": {
+        "type": "String"
+      }
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "@@locale": "nl",
+  "settings": "Instellingen",
+  "headerTitle": "Slaap inzichtelijk.",
+  "headerDescription": "Neem je nacht op en ontdek wat er gebeurt. Alles blijft lokaal op je telefoon.",
+  "local": "Lokaal",
+  "deleteAllRecordings": "Alle opnames verwijderen",
+  "deleteRecordingTitle": "Opname verwijderen?",
+  "deleteRecordingContent": "Het lokale audiobestand en de vermelding worden van dit apparaat verwijderd.",
+  "cancel": "Annuleren",
+  "delete": "Verwijderen",
+  "deleteAllTitle": "Alle opnames verwijderen?",
+  "deleteAllContent": "Alle lokale audiobestanden en labels worden permanent van dit apparaat verwijderd.",
+  "deleteAll": "Alles verwijderen",
+  "permissionTitle": "Microfoontoegang staat nog uit",
+  "permissionBody": "Geef toestemming voordat je een slaapopname start. Er wordt niets naar een server gestuurd.",
+  "recordingEyebrow": "SLAAPOPNAME",
+  "recordingTitle": "Opname voor vannacht",
+  "recordingBusy": "Bezig",
+  "recordingReady": "Gereed",
+  "recordingInProgressHint": "geluid wordt lokaal opgeslagen",
+  "recordingReadyHint": "klaar wanneer jij gaat slapen",
+  "finishRecording": "Opname afronden…",
+  "stopRecording": "Opname stoppen",
+  "prepareMicrophone": "Microfoon klaarmaken…",
+  "startRecording": "Slaapopname starten",
+  "foregroundServiceNote": "Android houdt de opname actief met een zichtbare systeemmelding, ook als je scherm vergrendelt.",
+  "detectionReady": "Snurken en praten worden lokaal gemarkeerd.",
+  "detectionLoading": "Geluidsmodel wordt klaargemaakt…",
+  "detectionUnavailable": "Opname werkt, maar geluidslabels zijn niet beschikbaar.",
+  "detectionIdle": "Geluidslabels worden alleen op dit apparaat verwerkt.",
+  "privacyTitle": "Privé en lokaal",
+  "privacyBody": "Audio en geluidslabels blijven op je telefoon. Snorer gebruikt geen account, advertenties of cloudanalyse.",
+  "overviewEyebrow": "OVERZICHT",
+  "localRecordings": "Lokale opnames",
+  "recordingsCount": "{count, plural, =1{1 nacht} other{{count} nachten}}",
+  "@recordingsCount": {
+    "description": "Het aantal opgenomen nachten.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "emptyRecordingTitle": "Je eerste nacht verschijnt hier",
+  "emptyRecordingBody": "Start een slaapopname voordat je gaat slapen. Na het stoppen vind je de opname en lokale geluidslabels hier terug.",
+  "pauseRecording": "Pauzeer opname",
+  "playRecording": "Speel opname af",
+  "noEvents": "Geen duidelijke snurk- of praatmomenten herkend.",
+  "deleteRecordingTooltip": "Verwijder opname",
+  "errorTitle": "Er ging iets mis",
+  "footerTitle": "Jouw data blijft van jou",
+  "footerBody": "Snorer werkt zonder account, cloudsync of advertenties. Jij bepaalt wanneer een opname wordt verwijderd.",
+  "settingsIntroTitle": "Jouw Snorer",
+  "settingsIntroBody": "Maak de app rustig voor het moment waarop je hem gebruikt.",
+  "appearance": "Uiterlijk",
+  "language": "Taal",
+  "languageHint": "Kies de taal van de app.",
+  "privacy": "Privacy",
+  "privacyPhoneTitle": "Alles blijft op je telefoon",
+  "privacyPhoneBody": "Opnames, labels en geluidsanalyse worden lokaal opgeslagen. Snorer gebruikt geen account of cloudsync.",
+  "privacyMicrophoneTitle": "Microfoon alleen tijdens opnemen",
+  "privacyMicrophoneBody": "Android toont een melding zolang een slaapopname actief is.",
+  "about": "Over Snorer",
+  "aboutTitle": "Slaap inzichtelijk, lokaal opgeslagen",
+  "aboutBody": "Een eenvoudige slaaprecorder zonder advertenties en zonder account.",
+  "themeDark": "Donker",
+  "themeLight": "Licht",
+  "themeHurm": "Hurm",
+  "themeDarkDescription": "Rustig voor de nacht",
+  "themeLightDescription": "Helder overdag",
+  "themeHurmDescription": "Warm en zacht",
+  "languageDutch": "Nederlands",
+  "languageEnglish": "Engels",
+  "recordingLabelSnoring": "Snurken",
+  "recordingLabelSpeech": "Praten",
+  "recordingLabelNone": "Nog niet gelabeld",
+  "snoringMoments": "{count, plural, =1{1 snurkmoment} other{{count} snurkmomenten}}",
+  "@snoringMoments": {
+    "description": "Het aantal gedetecteerde snurkmomenten.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "speechMoments": "{count, plural, =1{1 praatmoment} other{{count} praatmomenten}}",
+  "@speechMoments": {
+    "description": "Het aantal gedetecteerde praatmomenten.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursUnit": "u",
+  "durationMinutesUnit": "m",
+  "durationSecondsUnit": "s",
+  "notificationChannelName": "Snorer-opname",
+  "notificationChannelDescription": "Toont wanneer Snorer een nachtelijke opname maakt.",
+  "notificationTitle": "Snorer neemt op",
+  "notificationText": "Slaapgeluiden worden lokaal opgeslagen.",
+  "errorMicrophonePermission": "Geef Snorer toegang tot de microfoon om slaapgeluiden lokaal op te nemen.",
+  "errorRecordingStart": "Opname starten lukt niet",
+  "errorRecordingStop": "Opname stoppen lukt niet",
+  "errorRecordingInvalidFile": "De opname heeft geen geldig bestand opgeleverd.",
+  "errorPlaybackLoad": "Afspelen voorbereiden lukt niet",
+  "errorPlayback": "Afspelen lukt niet",
+  "errorPlaybackSeek": "Naar dit moment springen lukt niet",
+  "errorLibraryLoad": "De lokale opnamegeschiedenis kon niet worden gelezen.",
+  "errorDeleteRecording": "Deze opname kon niet van het apparaat worden verwijderd.",
+  "errorDeleteAllRecordings": "Niet alle lokale opnames konden worden verwijderd.",
+  "errorPersistRecording": "De opname is gemaakt, maar de lokale index kon niet worden bijgewerkt.",
+  "errorWithDetail": "{message}: {detail}",
+  "@errorWithDetail": {
+    "description": "Een foutmelding met technische details.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      },
+      "detail": {
+        "type": "String"
+      }
+    }
+  }
+}

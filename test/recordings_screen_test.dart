@@ -51,6 +51,52 @@ void main() {
 
     expect(viewModel.recordings.single.label, RecordingLabel.snoring);
   });
+  testWidgets('moves the waveform playhead with playback state', (
+    tester,
+  ) async {
+    final recording = StoredRecording(
+      id: 'night-1',
+      audioPath: '/tmp/night-1.wav',
+      startedAt: DateTime.parse('2026-08-07T22:30:00Z'),
+      durationSeconds: 185,
+      soundEvents: const [],
+      label: null,
+    );
+    final player = _FakePlayer();
+    final viewModel = _createViewModel([recording], player: player);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: RecordingsScreen(viewModel: viewModel),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final scrollable = find.byType(Scrollable);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('recording_playhead')),
+      500,
+      scrollable: scrollable,
+    );
+
+    player.emit(
+      const AudioPlaybackState(
+        recordingId: 'night-1',
+        currentSeconds: 50,
+        durationSeconds: 100,
+        isPlaying: true,
+      ),
+    );
+    await tester.pump();
+
+    final waveform = find.byKey(const Key('recording_waveform'));
+    final waveformLeft = tester.getTopLeft(waveform).dx;
+    final waveformWidth = tester.getSize(waveform).width;
+    final updatedLeft = tester.getTopLeft(
+      find.byKey(const Key('recording_playhead')),
+    );
+    expect(updatedLeft.dx, closeTo(waveformLeft + waveformWidth / 2 - 1, 2));
+  });
 
   testWidgets('switches the recorder card to stop mode after starting', (
     tester,
@@ -91,11 +137,14 @@ void main() {
   });
 }
 
-RecordingsViewModel _createViewModel(List<StoredRecording> recordings) {
+RecordingsViewModel _createViewModel(
+  List<StoredRecording> recordings, {
+  AudioPlaybackService? player,
+}) {
   return RecordingsViewModel(
     repository: _FakeRepository(recordings),
     recorder: _FakeRecorder(),
-    player: _FakePlayer(),
+    player: player ?? _FakePlayer(),
   );
 }
 
@@ -162,6 +211,10 @@ class _FakePlayer implements AudioPlaybackService {
 
   @override
   Stream<AudioPlaybackState> get states => _states.stream;
+  void emit(AudioPlaybackState state) {
+    _state = state;
+    _states.add(state);
+  }
 
   @override
   Future<void> load(StoredRecording? recording) async {

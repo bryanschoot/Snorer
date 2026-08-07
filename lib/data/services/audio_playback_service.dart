@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:just_audio/just_audio.dart';
 
+import '../../core/errors/snorer_error.dart';
 import '../../domain/models/recording.dart';
 
 class AudioPlaybackState {
@@ -17,7 +18,7 @@ class AudioPlaybackState {
   final double currentSeconds;
   final double durationSeconds;
   final bool isPlaying;
-  final String? error;
+  final SnorerError? error;
 
   double get progress => durationSeconds <= 0
       ? 0
@@ -29,7 +30,7 @@ class AudioPlaybackState {
     double? currentSeconds,
     double? durationSeconds,
     bool? isPlaying,
-    String? error,
+    SnorerError? error,
     bool clearError = false,
   }) {
     return AudioPlaybackState(
@@ -122,7 +123,10 @@ class JustAudioPlaybackService implements AudioPlaybackService {
         AudioPlaybackState(
           recordingId: recording.id,
           durationSeconds: recording.durationSeconds,
-          error: 'Afspelen voorbereiden lukt niet: ${_errorMessage(error)}',
+          error: SnorerError(
+            SnorerErrorCode.playbackLoad,
+            detail: _errorMessage(error),
+          ),
         ),
       );
     }
@@ -139,7 +143,12 @@ class JustAudioPlaybackService implements AudioPlaybackService {
       }
     } catch (error) {
       _setState(
-        _state.copyWith(error: 'Afspelen lukt niet: ${_errorMessage(error)}'),
+        _state.copyWith(
+          error: SnorerError(
+            SnorerErrorCode.playback,
+            detail: _errorMessage(error),
+          ),
+        ),
       );
     }
   }
@@ -153,7 +162,10 @@ class JustAudioPlaybackService implements AudioPlaybackService {
     } catch (error) {
       _setState(
         _state.copyWith(
-          error: 'Naar dit moment springen lukt niet: ${_errorMessage(error)}',
+          error: SnorerError(
+            SnorerErrorCode.playbackSeek,
+            detail: _errorMessage(error),
+          ),
         ),
       );
     }

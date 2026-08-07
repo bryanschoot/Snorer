@@ -2,8 +2,12 @@ import 'dart:io';
 
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
+import '../../core/localization/snorer_language.dart';
+import '../../core/localization/app_localizations.dart';
+
 abstract interface class ForegroundRecordingController {
   Future<void> initialize();
+  void setLanguage(SnorerLanguage language);
   Future<void> start();
   Future<void> stop();
 }
@@ -12,6 +16,9 @@ class NoopForegroundRecordingController
     implements ForegroundRecordingController {
   @override
   Future<void> initialize() async {}
+
+  @override
+  void setLanguage(SnorerLanguage language) {}
 
   @override
   Future<void> start() async {}
@@ -24,16 +31,22 @@ class AndroidForegroundRecordingController
     implements ForegroundRecordingController {
   static const _serviceId = 3801;
   bool _initialized = false;
+  SnorerLanguage _language = SnorerLanguage.dutch;
+
+  @override
+  void setLanguage(SnorerLanguage language) {
+    _language = language;
+  }
 
   @override
   Future<void> initialize() async {
     if (_initialized) return;
+    final strings = lookupAppLocalizations(_language.locale);
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'snorer_recording',
-        channelName: 'Snorer-opname',
-        channelDescription:
-            'Toont wanneer Snorer een nachtelijke opname maakt.',
+        channelName: strings.notificationChannelName,
+        channelDescription: strings.notificationChannelDescription,
         onlyAlertOnce: true,
       ),
       iosNotificationOptions: const IOSNotificationOptions(
@@ -64,10 +77,11 @@ class AndroidForegroundRecordingController
     await _requestPermissions();
     if (await FlutterForegroundTask.isRunningService) return;
 
+    final strings = lookupAppLocalizations(_language.locale);
     final result = await FlutterForegroundTask.startService(
       serviceId: _serviceId,
-      notificationTitle: 'Snorer neemt op',
-      notificationText: 'Slaapgeluiden worden lokaal opgeslagen.',
+      notificationTitle: strings.notificationTitle,
+      notificationText: strings.notificationText,
       serviceTypes: const [ForegroundServiceTypes.microphone],
       callback: startForegroundTaskCallback,
     );

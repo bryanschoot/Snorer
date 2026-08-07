@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../core/errors/snorer_error.dart';
+import '../../core/localization/snorer_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/services/audio_playback_service.dart';
 import '../../data/services/audio_recording_service.dart';
@@ -44,6 +46,7 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
           listenable: widget.viewModel,
           builder: (context, _) {
             final viewModel = widget.viewModel;
+            final strings = SnorerLocalizations.of(context);
             return LayoutBuilder(
               builder: (context, constraints) {
                 final horizontalPadding = constraints.maxWidth >= 720
@@ -61,7 +64,7 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                     _AppHeader(onOpenSettings: widget.onOpenSettings),
                     if (viewModel.recorderState.permissionGranted == false) ...[
                       const SizedBox(height: 16),
-                      const _PermissionBanner(),
+                      _PermissionBanner(),
                     ],
                     const SizedBox(height: 18),
                     _RecorderCard(
@@ -70,14 +73,14 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                       onStop: viewModel.stopRecording,
                     ),
                     const SizedBox(height: 14),
-                    const _PrivacyCard(),
+                    _PrivacyCard(),
                     const SizedBox(height: 28),
                     _SectionHeader(count: viewModel.recordings.length),
                     const SizedBox(height: 12),
                     if (!viewModel.isHydrated)
                       const _LoadingCard()
                     else if (viewModel.selectedRecording == null)
-                      const _EmptyRecordingState()
+                      _EmptyRecordingState()
                     else
                       _RecordingPlayerCard(
                         recording: viewModel.selectedRecording!,
@@ -103,7 +106,7 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                           onPressed: () =>
                               _confirmDeleteAll(context, viewModel),
                           icon: const Icon(Icons.delete_sweep_outlined),
-                          label: const Text('Alle opnames verwijderen'),
+                          label: Text(strings.deleteAllRecordings),
                           style: TextButton.styleFrom(
                             foregroundColor: context.snorerColors.danger,
                           ),
@@ -112,10 +115,10 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                     ],
                     if (viewModel.error != null) ...[
                       const SizedBox(height: 12),
-                      _ErrorCard(message: viewModel.error!),
+                      _ErrorCard(error: viewModel.error!),
                     ],
                     const SizedBox(height: 24),
-                    const _AppFooter(),
+                    _AppFooter(),
                   ],
                 );
               },
@@ -136,24 +139,23 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
     );
     final recording = matches.isEmpty ? null : matches.first;
     if (recording == null) return;
+    final strings = SnorerLocalizations.of(context);
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Opname verwijderen?'),
-        content: const Text(
-          'Het lokale audiobestand en de vermelding worden van dit apparaat verwijderd.',
-        ),
+        title: Text(strings.deleteRecordingTitle),
+        content: Text(strings.deleteRecordingContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuleren'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: context.snorerColors.dangerDark,
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Verwijderen'),
+            child: Text(strings.delete),
           ),
         ],
       ),
@@ -165,24 +167,23 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
     BuildContext context,
     RecordingsViewModel viewModel,
   ) async {
+    final strings = SnorerLocalizations.of(context);
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Alle opnames verwijderen?'),
-        content: const Text(
-          'Alle lokale audiobestanden en labels worden permanent van dit apparaat verwijderd.',
-        ),
+        title: Text(strings.deleteAllTitle),
+        content: Text(strings.deleteAllContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuleren'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: context.snorerColors.dangerDark,
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Alles verwijderen'),
+            child: Text(strings.deleteAll),
           ),
         ],
       ),
@@ -199,6 +200,7 @@ class _AppHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -206,10 +208,10 @@ class _AppHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _Eyebrow('SNORER'),
+              _Eyebrow('SNORER'),
               const SizedBox(height: 8),
               Text(
-                'Slaap inzichtelijk.',
+                strings.headerTitle,
                 style: TextStyle(
                   fontSize: 32,
                   height: 1.12,
@@ -220,7 +222,7 @@ class _AppHeader extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Neem je nacht op en ontdek wat er gebeurt. Alles blijft lokaal op je telefoon.',
+                strings.headerDescription,
                 style: TextStyle(
                   color: colors.muted,
                   fontSize: 14,
@@ -237,7 +239,7 @@ class _AppHeader extends StatelessWidget {
             IconButton(
               key: const Key('open_settings'),
               onPressed: onOpenSettings,
-              tooltip: 'Instellingen',
+              tooltip: strings.settings,
               icon: const Icon(Icons.settings_outlined),
             ),
             Container(
@@ -253,7 +255,7 @@ class _AppHeader extends StatelessWidget {
                   _StatusDot(),
                   const SizedBox(width: 6),
                   Text(
-                    'Lokaal',
+                    strings.local,
                     style: TextStyle(
                       color: colors.text,
                       fontSize: 12,
@@ -312,6 +314,7 @@ class _PermissionBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Container(
       key: const Key('permission_banner'),
       padding: const EdgeInsets.all(16),
@@ -330,7 +333,7 @@ class _PermissionBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Microfoontoegang staat nog uit',
+                  strings.permissionTitle,
                   style: TextStyle(
                     color: colors.warning,
                     fontWeight: FontWeight.w800,
@@ -338,7 +341,7 @@ class _PermissionBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Geef toestemming voordat je een slaapopname start. Er wordt niets naar een server gestuurd.',
+                  strings.permissionBody,
                   style: TextStyle(
                     color: colors.warningText,
                     fontSize: 13,
@@ -368,16 +371,14 @@ class _RecorderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     final isRecording = state.isRecording;
     final isBusy = state.isBusy;
     final detectionHint = switch (state.soundDetectionStatus) {
-      SoundDetectionStatus.ready =>
-        'Snurken en praten worden lokaal gemarkeerd.',
-      SoundDetectionStatus.loading => 'Geluidsmodel wordt klaargemaakt…',
-      SoundDetectionStatus.unavailable =>
-        'Opname werkt, maar geluidslabels zijn niet beschikbaar.',
-      SoundDetectionStatus.idle =>
-        'Geluidslabels worden alleen op dit apparaat verwerkt.',
+      SoundDetectionStatus.ready => strings.detectionReady,
+      SoundDetectionStatus.loading => strings.detectionLoading,
+      SoundDetectionStatus.unavailable => strings.detectionUnavailable,
+      SoundDetectionStatus.idle => strings.detectionIdle,
     };
 
     return Card(
@@ -393,10 +394,10 @@ class _RecorderCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _Eyebrow('SLAAPOPNAME'),
+                      _Eyebrow(strings.recordingEyebrow),
                       const SizedBox(height: 6),
                       Text(
-                        'Opname voor vannacht',
+                        strings.recordingTitle,
                         style: TextStyle(
                           color: colors.text,
                           fontSize: 23,
@@ -423,7 +424,9 @@ class _RecorderCard extends StatelessWidget {
                       _StatusDot(active: isRecording),
                       const SizedBox(width: 6),
                       Text(
-                        isRecording ? 'Bezig' : 'Gereed',
+                        isRecording
+                            ? strings.recordingBusy
+                            : strings.recordingReady,
                         style: TextStyle(
                           color: colors.text,
                           fontSize: 12,
@@ -453,8 +456,8 @@ class _RecorderCard extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 7),
                   child: Text(
                     isRecording
-                        ? 'geluid wordt lokaal opgeslagen'
-                        : 'klaar wanneer jij gaat slapen',
+                        ? strings.recordingInProgressHint
+                        : strings.recordingReadyHint,
                     style: TextStyle(color: colors.muted, fontSize: 12),
                   ),
                 ),
@@ -477,8 +480,8 @@ class _RecorderCard extends StatelessWidget {
                       icon: const Icon(Icons.stop_rounded),
                       label: Text(
                         state.status == AudioRecordingStatus.stopping
-                            ? 'Opname afronden…'
-                            : 'Opname stoppen',
+                            ? strings.finishRecording
+                            : strings.stopRecording,
                       ),
                     )
                   : FilledButton.icon(
@@ -492,8 +495,8 @@ class _RecorderCard extends StatelessWidget {
                       icon: const Icon(Icons.fiber_manual_record_rounded),
                       label: Text(
                         state.status == AudioRecordingStatus.starting
-                            ? 'Microfoon klaarmaken…'
-                            : 'Slaapopname starten',
+                            ? strings.prepareMicrophone
+                            : strings.startRecording,
                       ),
                     ),
             ),
@@ -509,7 +512,7 @@ class _RecorderCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Android houdt de opname actief met een zichtbare systeemmelding, ook als je scherm vergrendelt.',
+                    strings.foregroundServiceNote,
                     style: TextStyle(
                       color: colors.muted,
                       fontSize: 12,
@@ -537,6 +540,7 @@ class _PrivacyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -559,7 +563,7 @@ class _PrivacyCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Privé en lokaal',
+                  strings.privacyTitle,
                   style: TextStyle(
                     color: colors.text,
                     fontWeight: FontWeight.w800,
@@ -567,7 +571,7 @@ class _PrivacyCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Audio en geluidslabels blijven op je telefoon. Snorer gebruikt geen account, advertenties of cloudanalyse.',
+                  strings.privacyBody,
                   style: TextStyle(
                     color: colors.muted,
                     fontSize: 13,
@@ -591,25 +595,29 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Eyebrow('OVERZICHT'),
-              SizedBox(height: 6),
+              _Eyebrow(strings.overviewEyebrow),
+              const SizedBox(height: 6),
               Text(
-                'Lokale opnames',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
+                strings.localRecordings,
+                style: const TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
         ),
         if (count > 0)
           Text(
-            '$count ${count == 1 ? 'nacht' : 'nachten'}',
+            strings.recordingsCount(count),
             style: TextStyle(color: colors.muted, fontSize: 13),
           ),
       ],
@@ -635,6 +643,7 @@ class _EmptyRecordingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
@@ -652,7 +661,7 @@ class _EmptyRecordingState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Je eerste nacht verschijnt hier',
+              strings.emptyRecordingTitle,
               style: TextStyle(
                 color: colors.text,
                 fontSize: 17,
@@ -661,7 +670,7 @@ class _EmptyRecordingState extends StatelessWidget {
             ),
             const SizedBox(height: 7),
             Text(
-              'Start een slaapopname voordat je gaat slapen. Na het stoppen vind je de opname en lokale geluidslabels hier terug.',
+              strings.emptyRecordingBody,
               textAlign: TextAlign.center,
               style: TextStyle(color: colors.muted, fontSize: 13, height: 1.45),
             ),
@@ -706,11 +715,15 @@ class _RecordingPlayerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
-    final timelineDuration = <double>[
-      recording.durationSeconds,
-      playback.durationSeconds,
-      1.0,
-    ].reduce((a, b) => a > b ? a : b);
+    final strings = SnorerLocalizations.of(context);
+    final timelineDuration = playback.durationSeconds > 0
+        ? playback.durationSeconds
+        : recording.durationSeconds > 0
+        ? recording.durationSeconds
+        : 1.0;
+    final timelineProgress = (playback.currentSeconds / timelineDuration)
+        .clamp(0, 1)
+        .toDouble();
     final snoringCount = recording.soundEvents
         .where((event) => event.kind == SoundEventKind.snoring)
         .length;
@@ -730,48 +743,76 @@ class _RecordingPlayerCard extends StatelessWidget {
                   child: SizedBox(
                     height: 74,
                     child: LayoutBuilder(
-                      builder: (context, constraints) => GestureDetector(
-                        key: const Key('recording_waveform'),
-                        onTapUp: (details) {
-                          final fraction =
-                              (details.localPosition.dx / constraints.maxWidth)
-                                  .clamp(0, 1)
-                                  .toDouble();
-                          unawaited(onSeek(fraction * timelineDuration));
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            for (
-                              var index = 0;
-                              index < _waveform.length;
-                              index += 1
-                            )
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 2,
-                                  ),
-                                  child: _WaveBar(
-                                    height: 14 + _waveform[index] * 38,
-                                    color:
-                                        _eventColor(
-                                          recording,
-                                          index,
-                                          timelineDuration,
-                                          colors,
-                                        ) ??
-                                        (index / _waveform.length <=
-                                                playback.progress
-                                            ? colors.primary
-                                            : colors.waveInactive),
+                      builder: (context, constraints) {
+                        final playheadLeft =
+                            (constraints.maxWidth * timelineProgress - 1)
+                                .clamp(0.0, constraints.maxWidth - 2)
+                                .toDouble();
+                        return GestureDetector(
+                          key: const Key('recording_waveform'),
+                          onTapUp: (details) {
+                            final fraction =
+                                (details.localPosition.dx /
+                                        constraints.maxWidth)
+                                    .clamp(0, 1)
+                                    .toDouble();
+                            unawaited(onSeek(fraction * timelineDuration));
+                          },
+                          child: Stack(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  for (
+                                    var index = 0;
+                                    index < _waveform.length;
+                                    index += 1
+                                  )
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 2,
+                                        ),
+                                        child: _WaveBar(
+                                          height: 14 + _waveform[index] * 38,
+                                          color:
+                                              _eventColor(
+                                                recording,
+                                                index,
+                                                timelineDuration,
+                                                colors,
+                                              ) ??
+                                              ((index + 0.5) /
+                                                          _waveform.length <=
+                                                      timelineProgress
+                                                  ? colors.primary
+                                                  : colors.waveInactive),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              Positioned(
+                                key: const Key('recording_playhead'),
+                                left: playheadLeft,
+                                top: 0,
+                                bottom: 0,
+                                child: IgnorePointer(
+                                  child: Container(
+                                    width: 2,
+                                    decoration: BoxDecoration(
+                                      color: colors.primaryDark,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                      ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -780,8 +821,8 @@ class _RecordingPlayerCard extends StatelessWidget {
                   key: const Key('toggle_playback'),
                   onPressed: () => unawaited(onTogglePlayback()),
                   tooltip: playback.isPlaying
-                      ? 'Pauzeer opname'
-                      : 'Speel opname af',
+                      ? strings.pauseRecording
+                      : strings.playRecording,
                   icon: Icon(
                     playback.isPlaying
                         ? Icons.pause_rounded
@@ -791,7 +832,7 @@ class _RecordingPlayerCard extends StatelessWidget {
               ],
             ),
             Slider(
-              value: playback.progress,
+              value: timelineProgress,
               onChanged: playback.durationSeconds > 0
                   ? (value) => unawaited(onSeek(value * timelineDuration))
                   : null,
@@ -815,7 +856,7 @@ class _RecordingPlayerCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              formatDate(recording.startedAt),
+              strings.formatDate(recording.startedAt),
               style: TextStyle(
                 color: colors.text,
                 fontSize: 17,
@@ -824,13 +865,13 @@ class _RecordingPlayerCard extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              '${labelText(recording.label)} · ${formatDuration(recording.durationSeconds)}',
+              '${strings.recordingLabel(recording.label)} · ${strings.formatDuration(recording.durationSeconds)}',
               style: TextStyle(color: colors.muted, fontSize: 13),
             ),
             const SizedBox(height: 12),
             if (recording.soundEvents.isEmpty)
               Text(
-                'Geen duidelijke snurk- of praatmomenten herkend.',
+                strings.noEvents,
                 style: TextStyle(color: colors.muted, fontSize: 12),
               )
             else
@@ -840,11 +881,17 @@ class _RecordingPlayerCard extends StatelessWidget {
                 children: [
                   _EventChip(
                     color: colors.danger,
-                    text: eventCountText(SoundEventKind.snoring, snoringCount),
+                    text: strings.eventCount(
+                      SoundEventKind.snoring,
+                      snoringCount,
+                    ),
                   ),
                   _EventChip(
                     color: colors.warning,
-                    text: eventCountText(SoundEventKind.speech, speechCount),
+                    text: strings.eventCount(
+                      SoundEventKind.speech,
+                      speechCount,
+                    ),
                   ),
                 ],
               ),
@@ -968,6 +1015,7 @@ class _RecordingListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
@@ -1017,7 +1065,7 @@ class _RecordingListTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          formatDate(recording.startedAt),
+                          strings.formatDate(recording.startedAt),
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: colors.text,
@@ -1027,7 +1075,7 @@ class _RecordingListTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          formatDuration(recording.durationSeconds),
+                          strings.formatDuration(recording.durationSeconds),
                           style: TextStyle(color: colors.muted, fontSize: 12),
                         ),
                       ],
@@ -1053,7 +1101,7 @@ class _RecordingListTile extends StatelessWidget {
               ),
               IconButton(
                 key: Key('delete_recording_${recording.id}'),
-                tooltip: 'Verwijder opname',
+                tooltip: strings.deleteRecordingTooltip,
                 onPressed: onDelete,
                 color: colors.danger,
                 icon: const Icon(Icons.delete_outline_rounded, size: 19),
@@ -1080,6 +1128,7 @@ class _LabelButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
@@ -1091,7 +1140,7 @@ class _LabelButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
       ),
       child: Text(
-        label.displayName,
+        strings.recordingLabel(label),
         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
@@ -1099,13 +1148,14 @@ class _LabelButton extends StatelessWidget {
 }
 
 class _ErrorCard extends StatelessWidget {
-  const _ErrorCard({required this.message});
+  const _ErrorCard({required this.error});
 
-  final String message;
+  final SnorerError error;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1117,12 +1167,12 @@ class _ErrorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Er ging iets mis',
+            strings.errorTitle,
             style: TextStyle(color: colors.danger, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
           Text(
-            message,
+            strings.errorMessage(error),
             style: TextStyle(
               color: colors.errorText,
               fontSize: 13,
@@ -1141,6 +1191,7 @@ class _AppFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Column(
@@ -1149,7 +1200,7 @@ class _AppFooter extends StatelessWidget {
           Divider(color: colors.border),
           const SizedBox(height: 14),
           Text(
-            'Jouw data blijft van jou',
+            strings.footerTitle,
             style: TextStyle(
               color: colors.text,
               fontSize: 13,
@@ -1158,7 +1209,7 @@ class _AppFooter extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            'Snorer werkt zonder account, cloudsync of advertenties. Jij bepaalt wanneer een opname wordt verwijderd.',
+            strings.footerBody,
             style: TextStyle(color: colors.muted, fontSize: 12, height: 1.5),
           ),
         ],
