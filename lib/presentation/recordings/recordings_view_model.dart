@@ -3,7 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-
+import '../../core/errors/snorer_error.dart';
 import '../../data/services/audio_playback_service.dart';
 import '../../data/services/audio_recording_service.dart';
 import '../../data/repositories/recording_repository.dart';
@@ -40,7 +40,7 @@ class RecordingsViewModel extends ChangeNotifier {
   AudioRecordingState _recorderState = const AudioRecordingState();
   AudioPlaybackState _playerState = const AudioPlaybackState();
   String? _selectedId;
-  String? _libraryError;
+  SnorerError? _libraryError;
   bool _isHydrated = false;
   bool _disposed = false;
 
@@ -48,7 +48,7 @@ class RecordingsViewModel extends ChangeNotifier {
   AudioRecordingState get recorderState => _recorderState;
   AudioPlaybackState get playerState => _playerState;
   bool get isHydrated => _isHydrated;
-  String? get error =>
+  SnorerError? get error =>
       _recorderState.error ?? _playerState.error ?? _libraryError;
   StoredRecording? get selectedRecording {
     if (_recordings.isEmpty) return null;
@@ -65,7 +65,7 @@ class RecordingsViewModel extends ChangeNotifier {
       _selectedId = _recordings.firstOrNull?.id;
       _libraryError = null;
     } catch (_) {
-      _libraryError = 'De lokale opnamegeschiedenis kon niet worden gelezen.';
+      _libraryError = const SnorerError(SnorerErrorCode.libraryLoad);
     } finally {
       _isHydrated = true;
       notifyListeners();
@@ -147,8 +147,7 @@ class RecordingsViewModel extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (_) {
-      _libraryError =
-          'Deze opname kon niet van het apparaat worden verwijderd.';
+      _libraryError = const SnorerError(SnorerErrorCode.deleteRecording);
       notifyListeners();
       return false;
     }
@@ -166,7 +165,7 @@ class RecordingsViewModel extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (_) {
-      _libraryError = 'Niet alle lokale opnames konden worden verwijderd.';
+      _libraryError = const SnorerError(SnorerErrorCode.deleteAllRecordings);
       notifyListeners();
       return false;
     }
@@ -186,8 +185,7 @@ class RecordingsViewModel extends ChangeNotifier {
       await _repository.saveRecordings(_recordings);
       _libraryError = null;
     } catch (_) {
-      _libraryError =
-          'De opname is gemaakt, maar de lokale index kon niet worden bijgewerkt.';
+      _libraryError = const SnorerError(SnorerErrorCode.persistRecording);
     }
   }
 

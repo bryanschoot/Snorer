@@ -2,38 +2,46 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../core/localization/snorer_language.dart';
+import '../../core/localization/snorer_localizations.dart';
 import '../../core/theme/app_theme.dart';
+import 'language_controller.dart';
 import 'theme_controller.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key, required this.themeController});
+  const SettingsScreen({
+    super.key,
+    required this.themeController,
+    required this.languageController,
+  });
 
   final ThemeController themeController;
-
+  final LanguageController languageController;
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Instellingen')),
+      appBar: AppBar(title: Text(strings.settings)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 36),
           children: [
             Text(
-              'Jouw Snorer',
+              strings.settingsIntroTitle,
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
-              'Maak de app rustig voor het moment waarop je hem gebruikt.',
+              strings.settingsIntroBody,
               style: TextStyle(color: colors.muted, height: 1.45),
             ),
             const SizedBox(height: 24),
             _SettingsSectionTitle(
               icon: Icons.palette_outlined,
-              title: 'Uiterlijk',
+              title: strings.appearance,
               colors: colors,
             ),
             const SizedBox(height: 10),
@@ -66,8 +74,56 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 26),
             _SettingsSectionTitle(
+              icon: Icons.language_outlined,
+              title: strings.language,
+              colors: colors,
+            ),
+            const SizedBox(height: 10),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: ListenableBuilder(
+                  listenable: languageController,
+                  builder: (context, _) => RadioGroup<SnorerLanguage>(
+                    groupValue: languageController.language,
+                    onChanged: (language) {
+                      if (language != null) {
+                        unawaited(languageController.setLanguage(language));
+                      }
+                    },
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              strings.languageHint,
+                              style: TextStyle(
+                                color: colors.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        for (final language in SnorerLanguage.values)
+                          _LanguageOption(
+                            language: language,
+                            selected: languageController.language == language,
+                            onSelected: () => unawaited(
+                              languageController.setLanguage(language),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 26),
+            _SettingsSectionTitle(
               icon: Icons.shield_outlined,
-              title: 'Privacy',
+              title: strings.privacy,
               colors: colors,
             ),
             const SizedBox(height: 10),
@@ -79,10 +135,8 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.lock_outline_rounded,
                       colors: colors,
                     ),
-                    title: const Text('Alles blijft op je telefoon'),
-                    subtitle: const Text(
-                      'Opnames, labels en geluidsanalyse worden lokaal opgeslagen. Snorer gebruikt geen account of cloudsync.',
-                    ),
+                    title: Text(strings.privacyPhoneTitle),
+                    subtitle: Text(strings.privacyPhoneBody),
                   ),
                   Divider(height: 1, color: colors.border),
                   ListTile(
@@ -90,10 +144,8 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.mic_none_rounded,
                       colors: colors,
                     ),
-                    title: const Text('Microfoon alleen tijdens opnemen'),
-                    subtitle: const Text(
-                      'Android toont een melding zolang een slaapopname actief is.',
-                    ),
+                    title: Text(strings.privacyMicrophoneTitle),
+                    subtitle: Text(strings.privacyMicrophoneBody),
                   ),
                 ],
               ),
@@ -101,7 +153,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 26),
             _SettingsSectionTitle(
               icon: Icons.info_outline_rounded,
-              title: 'Over Snorer',
+              title: strings.about,
               colors: colors,
             ),
             const SizedBox(height: 10),
@@ -111,10 +163,8 @@ class SettingsScreen extends StatelessWidget {
                   icon: Icons.nightlight_round,
                   colors: colors,
                 ),
-                title: const Text('Slaap inzichtelijk, lokaal opgeslagen'),
-                subtitle: const Text(
-                  'Een eenvoudige slaaprecorder zonder advertenties en zonder account.',
-                ),
+                title: Text(strings.aboutTitle),
+                subtitle: Text(strings.aboutBody),
               ),
             ),
           ],
@@ -138,6 +188,7 @@ class _ThemeOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Material(
@@ -170,18 +221,64 @@ class _ThemeOption extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        mode.label,
+                        strings.themeLabel(mode),
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        mode.description,
+                        strings.themeDescription(mode),
                         style: TextStyle(color: colors.muted, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
                 Radio<SnorerThemeMode>(value: mode),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageOption extends StatelessWidget {
+  const _LanguageOption({
+    required this.language,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final SnorerLanguage language;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: selected ? colors.primaryContainer : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          key: Key('language_option_${language.name}'),
+          onTap: onSelected,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              children: [
+                Icon(Icons.translate_rounded, color: colors.primary, size: 21),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    strings.languageLabel(language),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                Radio<SnorerLanguage>(value: language),
               ],
             ),
           ),
