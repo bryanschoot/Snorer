@@ -28,21 +28,19 @@ labels in `SharedPreferences`.
   interface.
 - `test/`: model, sound-detection, and widget interaction tests.
 
-The release build currently uses Flutter's debug signing configuration. CI
-signing should provide a release keystore through GitHub Secrets before a
-public release tag is created.
-
-## Release
-
-Pushing a `vMAJOR.MINOR.PATCH` tag starts
-`.github/workflows/android-release.yml`. The tag must match the version in
-`pubspec.yaml`. Configure these repository secrets before triggering a release:
+The release build falls back to Flutter's debug signing configuration when no
+keystore is provided. This produces an installable APK for testing and GitHub
+Releases, but it is not suitable for Google Play publication or production
+updates. Configure these repository secrets when a stable application signing
+identity is needed:
 
 - `ANDROID_KEYSTORE_BASE64`
 - `ANDROID_KEYSTORE_PASSWORD`
 - `ANDROID_KEY_ALIAS`
 - `ANDROID_KEY_PASSWORD`
 
-The workflow runs analysis and tests, builds the release APK, verifies its
-signature, publishes a SHA-256 checksum, and attaches both files to a GitHub
-Release.
+Pushing a `vMAJOR.MINOR.PATCH` tag starts
+`.github/workflows/android-release.yml`. The tag must match the version in
+`pubspec.yaml`. The workflow runs analysis and tests, builds the release APK,
+verifies its signature, publishes a SHA-256 checksum, and attaches both files
+to a GitHub Release.
