@@ -8,8 +8,10 @@ import 'data/services/audio_recording_service.dart';
 import 'data/services/foreground_recording_service.dart';
 import 'data/services/sound_model_service.dart';
 import 'presentation/recordings/recordings_view_model.dart';
+import 'data/services/theme_preferences.dart';
+import 'presentation/settings/theme_controller.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   FlutterForegroundTask.initCommunicationPort();
 
@@ -24,6 +26,8 @@ void main() {
     recorder: recorder,
     player: JustAudioPlaybackService(),
   );
+  final themeController = ThemeController(preferences: LocalThemePreferences());
+  await themeController.initialize();
 
-  runApp(SnorerApp(viewModel: viewModel));
+  runApp(SnorerApp(viewModel: viewModel, themeController: themeController));
 }

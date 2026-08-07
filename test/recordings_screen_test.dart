@@ -38,7 +38,7 @@ void main() {
       scrollable: scrollable,
     );
     expect(find.text('Lokale opnames'), findsOneWidget);
-    expect(find.text('1 sessie'), findsOneWidget);
+    expect(find.text('1 nacht'), findsOneWidget);
     expect(find.text('3m 05s'), findsOneWidget);
 
     await tester.scrollUntilVisible(
@@ -70,6 +70,24 @@ void main() {
 
     expect(find.byKey(const Key('stop_recording')), findsOneWidget);
     expect(find.text('Opname voor vannacht'), findsOneWidget);
+  });
+  testWidgets('exposes the settings action', (tester) async {
+    var opened = false;
+    final viewModel = _createViewModel(const []);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: RecordingsScreen(
+          viewModel: viewModel,
+          onOpenSettings: () => opened = true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('open_settings')));
+    expect(opened, isTrue);
   });
 }
 
