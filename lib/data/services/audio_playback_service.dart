@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:just_audio/just_audio.dart';
 
@@ -11,6 +13,7 @@ class AudioPlaybackState {
     this.currentSeconds = 0,
     this.durationSeconds = 0,
     this.isPlaying = false,
+    this.waveform = const [],
     this.error,
   });
 
@@ -18,6 +21,7 @@ class AudioPlaybackState {
   final double currentSeconds;
   final double durationSeconds;
   final bool isPlaying;
+  final List<double> waveform;
   final SnorerError? error;
 
   double get progress => durationSeconds <= 0
@@ -30,6 +34,7 @@ class AudioPlaybackState {
     double? currentSeconds,
     double? durationSeconds,
     bool? isPlaying,
+    List<double>? waveform,
     SnorerError? error,
     bool clearError = false,
   }) {
@@ -38,6 +43,7 @@ class AudioPlaybackState {
       currentSeconds: currentSeconds ?? this.currentSeconds,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       isPlaying: isPlaying ?? this.isPlaying,
+      waveform: waveform ?? this.waveform,
       error: clearError ? null : error ?? this.error,
     );
   }
@@ -64,9 +70,10 @@ class JustAudioPlaybackService implements AudioPlaybackService {
     );
     _subscriptions.add(
       _player.durationStream.listen((duration) {
+        final seconds = duration?.inMilliseconds.toDouble() ?? 0;
         _setState(
           _state.copyWith(
-            durationSeconds: duration?.inMilliseconds.toDouble() ?? 0,
+            durationSeconds: seconds > 0 ? seconds : _state.durationSeconds,
           ),
         );
       }),
@@ -89,6 +96,7 @@ class JustAudioPlaybackService implements AudioPlaybackService {
   final List<StreamSubscription<dynamic>> _subscriptions = [];
   AudioPlaybackState _state = const AudioPlaybackState();
   bool _disposed = false;
+  int _loadGeneration = 0;
 
   @override
   AudioPlaybackState get state => _state;
@@ -104,6 +112,7 @@ class JustAudioPlaybackService implements AudioPlaybackService {
 
   @override
   Future<void> load(StoredRecording? recording) async {
+    final loadGeneration = ++_loadGeneration;
     if (recording == null) {
       await _player.stop();
       _setState(const AudioPlaybackState());
@@ -112,12 +121,27 @@ class JustAudioPlaybackService implements AudioPlaybackService {
 
     try {
       await _player.setFilePath(recording.audioPath);
+      if (_disposed || loadGeneration != _loadGeneration) return;
       _setState(
         AudioPlaybackState(
           recordingId: recording.id,
           durationSeconds: recording.durationSeconds,
         ),
       );
+
+      var waveform = const <double>[];
+      try {
+        waveform = await _readWaveform(recording.audioPath);
+      } catch (_) {
+        // Playback remains available even when an older or malformed file
+        // cannot provide waveform samples.
+      }
+      if (_disposed ||
+          loadGeneration != _loadGeneration ||
+          _state.recordingId != recording.id) {
+        return;
+      }
+      _setState(_state.copyWith(waveform: waveform));
     } catch (error) {
       _setState(
         AudioPlaybackState(
@@ -132,6 +156,59 @@ class JustAudioPlaybackService implements AudioPlaybackService {
     }
   }
 
+  Future<List<double>> _readWaveform(String path) async {
+    const headerBytes = 44;
+    const bucketCount = 96;
+    const windowsPerBucket = 4;
+    const samplesPerWindow = 256;
+    final file = await File(path).open();
+    try {
+      final dataLength = await file.length() - headerBytes;
+      final sampleCount = dataLength ~/ 2;
+      if (sampleCount <= 0) return const [];
+
+      final peaks = List<double>.filled(bucketCount, 0);
+      for (var bucket = 0; bucket < bucketCount; bucket += 1) {
+        final start = bucket * sampleCount ~/ bucketCount;
+        final end = (bucket + 1) * sampleCount ~/ bucketCount;
+        final span = end > start ? end - start : 1;
+        for (var window = 0; window < windowsPerBucket; window += 1) {
+          final windowStart = start + span * window ~/ windowsPerBucket;
+          final remaining = end - windowStart;
+          if (remaining <= 0) continue;
+          final samplesToRead = remaining < samplesPerWindow
+              ? remaining
+              : samplesPerWindow;
+          await file.setPosition(headerBytes + windowStart * 2);
+          final bytes = await file.read(samplesToRead * 2);
+          final data = ByteData.sublistView(bytes);
+          for (var offset = 0;
+              offset + 1 < data.lengthInBytes;
+              offset += 2) {
+            final amplitude =
+                (data.getInt16(offset, Endian.little).abs() / 32768)
+                    .clamp(0, 1)
+                    .toDouble();
+            if (amplitude > peaks[bucket]) peaks[bucket] = amplitude;
+          }
+        }
+      }
+
+      var maximum = 0.0;
+      for (final peak in peaks) {
+        if (peak > maximum) maximum = peak;
+      }
+      if (maximum <= 0) return const [];
+      return List<double>.unmodifiable(
+        peaks.map(
+          (peak) => (peak / maximum).clamp(0.08, 1.0).toDouble(),
+        ),
+      );
+    } finally {
+      await file.close();
+    }
+  }
+
   @override
   Future<void> toggle() async {
     if (_state.recordingId == null) return;
@@ -139,6 +216,9 @@ class JustAudioPlaybackService implements AudioPlaybackService {
       if (_player.playing) {
         await _player.pause();
       } else {
+        if (_player.processingState == ProcessingState.completed) {
+          await _player.seek(Duration.zero);
+        }
         await _player.play();
       }
     } catch (error) {

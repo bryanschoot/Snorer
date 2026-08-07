@@ -7,6 +7,7 @@ class LanguageController extends ChangeNotifier {
   LanguageController({required this._preferences});
 
   final LanguagePreferences _preferences;
+  Future<void> _saveQueue = Future<void>.value();
   SnorerLanguage _language = SnorerLanguage.dutch;
 
   SnorerLanguage get language => _language;
@@ -15,11 +16,12 @@ class LanguageController extends ChangeNotifier {
     _language = await _preferences.load();
     notifyListeners();
   }
-
   Future<void> setLanguage(SnorerLanguage language) async {
     if (_language == language) return;
     _language = language;
     notifyListeners();
-    await _preferences.save(language);
+    final save = _saveQueue.then((_) => _preferences.save(language));
+    _saveQueue = save.catchError((_) {});
+    await save;
   }
 }

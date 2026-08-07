@@ -97,6 +97,43 @@ void main() {
     );
     expect(updatedLeft.dx, closeTo(waveformLeft + waveformWidth / 2 - 1, 2));
   });
+  testWidgets('seeks from the waveform timeline', (tester) async {
+    final recording = StoredRecording(
+      id: 'night-1',
+      audioPath: '/tmp/night-1.wav',
+      startedAt: DateTime.parse('2026-08-07T22:30:00Z'),
+      durationSeconds: 185,
+      soundEvents: const [],
+      label: null,
+    );
+    final player = _FakePlayer();
+    final viewModel = _createViewModel([recording], player: player);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: RecordingsScreen(viewModel: viewModel),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final scrollable = find.byType(Scrollable);
+    final waveform = find.byKey(const Key('recording_waveform'));
+    await tester.scrollUntilVisible(waveform, 500, scrollable: scrollable);
+    player.emit(
+      const AudioPlaybackState(
+        recordingId: 'night-1',
+        durationSeconds: 100,
+        waveform: [0.2, 0.8, 0.4, 1.0],
+      ),
+    );
+    await tester.pump();
+
+    final rect = tester.getRect(waveform);
+    await tester.tapAt(Offset(rect.left + rect.width * 0.75, rect.center.dy));
+    await tester.pump();
+
+    expect(player.lastSeekSeconds, closeTo(75, 1));
+  });
 
   testWidgets('switches the recorder card to stop mode after starting', (
     tester,
@@ -205,6 +242,7 @@ class _FakePlayer implements AudioPlaybackService {
   final StreamController<AudioPlaybackState> _states =
       StreamController.broadcast();
   AudioPlaybackState _state = const AudioPlaybackState();
+  double? lastSeekSeconds;
 
   @override
   AudioPlaybackState get state => _state;
@@ -227,9 +265,10 @@ class _FakePlayer implements AudioPlaybackService {
 
   @override
   Future<void> toggle() async {}
-
   @override
-  Future<void> seekTo(double seconds) async {}
+  Future<void> seekTo(double seconds) async {
+    lastSeekSeconds = seconds;
+  }
 
   @override
   Future<void> pause() async {}

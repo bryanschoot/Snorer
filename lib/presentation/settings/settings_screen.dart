@@ -27,16 +27,44 @@ class SettingsScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 36),
           children: [
-            Text(
-              strings.settingsIntroTitle,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              strings.settingsIntroBody,
-              style: TextStyle(color: colors.muted, height: 1.45),
+            Container(
+              key: const Key('settings_intro_card'),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: colors.surfaceSoft,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: colors.border),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SettingsIcon(
+                    icon: Icons.nightlight_round,
+                    colors: colors,
+                    emphasized: true,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          strings.settingsIntroTitle,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          strings.settingsIntroBody,
+                          style: TextStyle(color: colors.muted, height: 1.45),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             _SettingsSectionTitle(
@@ -189,51 +217,67 @@ class _ThemeOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
     final strings = SnorerLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Material(
-        color: selected ? colors.primaryContainer : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          key: Key('theme_option_${mode.name}'),
-          onTap: onSelected,
+    return Semantics(
+      container: true,
+      selected: selected,
+      button: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Material(
+          color: selected ? colors.primaryContainer : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: selected ? colors.primary : colors.surfaceSoft,
-                    shape: BoxShape.circle,
+          child: InkWell(
+            key: Key('theme_option_${mode.name}'),
+            onTap: onSelected,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: selected ? colors.primary : colors.surfaceSoft,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      mode.icon,
+                      color: selected ? colors.onPrimary : colors.primary,
+                      size: 21,
+                    ),
                   ),
-                  child: Icon(
-                    mode.icon,
-                    color: selected ? colors.onPrimary : colors.primary,
-                    size: 21,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          strings.themeLabel(mode),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          strings.themeDescription(mode),
+                          style: TextStyle(color: colors.muted, fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        strings.themeLabel(mode),
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        strings.themeDescription(mode),
-                        style: TextStyle(color: colors.muted, fontSize: 12),
-                      ),
-                    ],
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: selected
+                        ? Icon(
+                            key: Key('theme_selected_${mode.name}'),
+                            Icons.check_circle_rounded,
+                            color: colors.primary,
+                            size: 20,
+                          )
+                        : const SizedBox(width: 20, height: 20),
                   ),
-                ),
-                Radio<SnorerThemeMode>(value: mode),
-              ],
+                  Radio<SnorerThemeMode>(value: mode),
+                ],
+              ),
             ),
           ),
         ),
@@ -257,29 +301,49 @@ class _LanguageOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
     final strings = SnorerLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Material(
-        color: selected ? colors.primaryContainer : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          key: Key('language_option_${language.name}'),
-          onTap: onSelected,
+    return Semantics(
+      container: true,
+      selected: selected,
+      button: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Material(
+          color: selected ? colors.primaryContainer : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Row(
-              children: [
-                Icon(Icons.translate_rounded, color: colors.primary, size: 21),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    strings.languageLabel(language),
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+          child: InkWell(
+            key: Key('language_option_${language.name}'),
+            onTap: onSelected,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.translate_rounded,
+                    color: selected ? colors.primary : colors.muted,
+                    size: 21,
                   ),
-                ),
-                Radio<SnorerLanguage>(value: language),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      strings.languageLabel(language),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: selected
+                        ? Icon(
+                            key: Key('language_selected_${language.name}'),
+                            Icons.check_circle_rounded,
+                            color: colors.primary,
+                            size: 20,
+                          )
+                        : const SizedBox(width: 20, height: 20),
+                  ),
+                  Radio<SnorerLanguage>(value: language),
+                ],
+              ),
             ),
           ),
         ),
@@ -287,6 +351,7 @@ class _LanguageOption extends StatelessWidget {
     );
   }
 }
+
 
 class _SettingsSectionTitle extends StatelessWidget {
   const _SettingsSectionTitle({
@@ -318,15 +383,21 @@ class _SettingsSectionTitle extends StatelessWidget {
 }
 
 class _SettingsIcon extends StatelessWidget {
-  const _SettingsIcon({required this.icon, required this.colors});
+  const _SettingsIcon({
+    required this.icon,
+    required this.colors,
+    this.emphasized = false,
+  });
 
   final IconData icon;
   final SnorerThemePalette colors;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) => CircleAvatar(
-    backgroundColor: colors.surfaceSoft,
-    foregroundColor: colors.primary,
-    child: Icon(icon, size: 20),
+    radius: emphasized ? 25 : 20,
+    backgroundColor: emphasized ? colors.primary : colors.surfaceSoft,
+    foregroundColor: emphasized ? colors.onPrimary : colors.primary,
+    child: Icon(icon, size: emphasized ? 25 : 20),
   );
 }

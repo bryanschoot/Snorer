@@ -205,28 +205,49 @@ class _AppHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _Eyebrow('SNORER'),
-              const SizedBox(height: 8),
-              Text(
-                strings.headerTitle,
-                style: TextStyle(
-                  fontSize: 32,
-                  height: 1.12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                  color: colors.text,
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.nightlight_round,
+                  color: colors.onPrimary,
+                  size: 22,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                strings.headerDescription,
-                style: TextStyle(
-                  color: colors.muted,
-                  fontSize: 14,
-                  height: 1.45,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Eyebrow('SNORER'),
+                    const SizedBox(height: 8),
+                    Text(
+                      strings.headerTitle,
+                      style: TextStyle(
+                        fontSize: 32,
+                        height: 1.12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.8,
+                        color: colors.text,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      strings.headerDescription,
+                      style: TextStyle(
+                        color: colors.muted,
+                        fontSize: 14,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -694,22 +715,31 @@ class _RecordingPlayerCard extends StatelessWidget {
   final Future<void> Function() onTogglePlayback;
   final Future<void> Function(double seconds) onSeek;
 
-  static const _waveform = <double>[
-    0.35,
-    0.58,
-    0.82,
-    0.46,
-    0.67,
-    0.94,
-    0.52,
-    0.73,
-    0.39,
-    0.63,
-    0.88,
-    0.5,
-    0.76,
+  static const _placeholderWaveform = <double>[
+    0.22,
     0.42,
-    0.6,
+    0.31,
+    0.68,
+    0.48,
+    0.83,
+    0.55,
+    0.38,
+    0.76,
+    0.44,
+    0.91,
+    0.62,
+    0.36,
+    0.71,
+    0.52,
+    0.87,
+    0.43,
+    0.29,
+    0.65,
+    0.8,
+    0.47,
+    0.58,
+    0.34,
+    0.73,
   ];
 
   @override
@@ -724,13 +754,18 @@ class _RecordingPlayerCard extends StatelessWidget {
     final timelineProgress = (playback.currentSeconds / timelineDuration)
         .clamp(0, 1)
         .toDouble();
+    final waveform = playback.waveform.isNotEmpty
+        ? playback.waveform
+        : _placeholderWaveform;
     final snoringCount = recording.soundEvents
         .where((event) => event.kind == SoundEventKind.snoring)
         .length;
     final speechCount = recording.soundEvents
         .where((event) => event.kind == SoundEventKind.speech)
         .length;
-
+    final displayedDuration = playback.durationSeconds > 0
+        ? playback.durationSeconds
+        : recording.durationSeconds;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -739,84 +774,40 @@ class _RecordingPlayerCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 74,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final playheadLeft =
-                            (constraints.maxWidth * timelineProgress - 1)
-                                .clamp(0.0, constraints.maxWidth - 2)
-                                .toDouble();
-                        return GestureDetector(
-                          key: const Key('recording_waveform'),
-                          onTapUp: (details) {
-                            final fraction =
-                                (details.localPosition.dx /
-                                        constraints.maxWidth)
-                                    .clamp(0, 1)
-                                    .toDouble();
-                            unawaited(onSeek(fraction * timelineDuration));
-                          },
-                          child: Stack(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  for (
-                                    var index = 0;
-                                    index < _waveform.length;
-                                    index += 1
-                                  )
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 2,
-                                        ),
-                                        child: _WaveBar(
-                                          height: 14 + _waveform[index] * 38,
-                                          color:
-                                              _eventColor(
-                                                recording,
-                                                index,
-                                                timelineDuration,
-                                                colors,
-                                              ) ??
-                                              ((index + 0.5) /
-                                                          _waveform.length <=
-                                                      timelineProgress
-                                                  ? colors.primary
-                                                  : colors.waveInactive),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              Positioned(
-                                key: const Key('recording_playhead'),
-                                left: playheadLeft,
-                                top: 0,
-                                bottom: 0,
-                                child: IgnorePointer(
-                                  child: Container(
-                                    width: 2,
-                                    decoration: BoxDecoration(
-                                      color: colors.primaryDark,
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Icon(
+                    Icons.graphic_eq_rounded,
+                    color: colors.onPrimaryContainer,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        strings.formatDate(recording.startedAt),
+                        style: TextStyle(
+                          color: colors.text,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${strings.recordingLabel(recording.label)} · ${strings.formatDuration(recording.durationSeconds)}',
+                        style: TextStyle(color: colors.muted, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
                 IconButton.filled(
                   key: const Key('toggle_playback'),
                   onPressed: () => unawaited(onTogglePlayback()),
@@ -831,11 +822,31 @@ class _RecordingPlayerCard extends StatelessWidget {
                 ),
               ],
             ),
-            Slider(
-              value: timelineProgress,
-              onChanged: playback.durationSeconds > 0
-                  ? (value) => unawaited(onSeek(value * timelineDuration))
-                  : null,
+            const SizedBox(height: 18),
+            _WaveformTimeline(
+              waveform: waveform,
+              progress: timelineProgress,
+              durationSeconds: timelineDuration,
+              events: recording.soundEvents,
+              onSeek: onSeek,
+            ),
+            const SizedBox(height: 4),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 4,
+                thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: 7,
+                ),
+                overlayShape: const RoundSliderOverlayShape(
+                  overlayRadius: 15,
+                ),
+              ),
+              child: Slider(
+                value: timelineProgress,
+                onChanged: timelineDuration > 0
+                    ? (value) => unawaited(onSeek(value * timelineDuration))
+                    : null,
+              ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -845,30 +856,12 @@ class _RecordingPlayerCard extends StatelessWidget {
                   style: TextStyle(color: colors.muted, fontSize: 12),
                 ),
                 Text(
-                  formatClock(
-                    playback.durationSeconds > 0
-                        ? playback.durationSeconds
-                        : recording.durationSeconds,
-                  ),
+                  formatClock(displayedDuration),
                   style: TextStyle(color: colors.muted, fontSize: 12),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              strings.formatDate(recording.startedAt),
-              style: TextStyle(
-                color: colors.text,
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              '${strings.recordingLabel(recording.label)} · ${strings.formatDuration(recording.durationSeconds)}',
-              style: TextStyle(color: colors.muted, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             if (recording.soundEvents.isEmpty)
               Text(
                 strings.noEvents,
@@ -881,6 +874,7 @@ class _RecordingPlayerCard extends StatelessWidget {
                 children: [
                   _EventChip(
                     color: colors.danger,
+                    icon: Icons.nightlight_round,
                     text: strings.eventCount(
                       SoundEventKind.snoring,
                       snoringCount,
@@ -888,6 +882,7 @@ class _RecordingPlayerCard extends StatelessWidget {
                   ),
                   _EventChip(
                     color: colors.warning,
+                    icon: Icons.record_voice_over_rounded,
                     text: strings.eventCount(
                       SoundEventKind.speech,
                       speechCount,
@@ -900,16 +895,215 @@ class _RecordingPlayerCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Color? _eventColor(
-    StoredRecording recording,
-    int index,
-    double timelineDuration,
-    SnorerThemePalette colors,
-  ) {
-    final start = index / _waveform.length * timelineDuration;
-    final end = (index + 1) / _waveform.length * timelineDuration;
-    for (final event in recording.soundEvents) {
+class _WaveformTimeline extends StatefulWidget {
+  const _WaveformTimeline({
+    required this.waveform,
+    required this.progress,
+    required this.durationSeconds,
+    required this.events,
+    required this.onSeek,
+  });
+
+  final List<double> waveform;
+  final double progress;
+  final double durationSeconds;
+  final List<SoundEvent> events;
+  final Future<void> Function(double seconds) onSeek;
+
+  @override
+  State<_WaveformTimeline> createState() => _WaveformTimelineState();
+}
+
+class _WaveformTimelineState extends State<_WaveformTimeline> {
+  Timer? _seekTimer;
+  Timer? _clearDragTimer;
+  double? _dragProgress;
+
+  double get _visibleProgress =>
+      (_dragProgress ?? widget.progress).clamp(0, 1).toDouble();
+
+  @override
+  void dispose() {
+    _seekTimer?.cancel();
+    _clearDragTimer?.cancel();
+    super.dispose();
+  }
+
+  double _progressFor(double dx, double width) {
+    if (width <= 0) return 0;
+    return (dx / width).clamp(0, 1).toDouble();
+  }
+
+  void _setDragProgress(double progress, {required bool immediate}) {
+    _clearDragTimer?.cancel();
+    if (mounted) setState(() => _dragProgress = progress);
+    _seekTimer?.cancel();
+    if (immediate) {
+      unawaited(widget.onSeek(progress * widget.durationSeconds));
+      return;
+    }
+    _seekTimer = Timer(const Duration(milliseconds: 40), () {
+      unawaited(widget.onSeek(progress * widget.durationSeconds));
+    });
+  }
+
+  void _handleTap(double dx, double width) {
+    final progress = _progressFor(dx, width);
+    _setDragProgress(progress, immediate: true);
+    _clearDragTimer = Timer(const Duration(milliseconds: 220), () {
+      if (mounted) setState(() => _dragProgress = null);
+    });
+  }
+
+  void _finishDrag() {
+    final progress = _dragProgress;
+    if (progress != null) {
+      _seekTimer?.cancel();
+      unawaited(widget.onSeek(progress * widget.durationSeconds));
+    }
+    if (mounted) setState(() => _dragProgress = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.snorerColors;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final progress = _visibleProgress;
+        final playheadLeft = (width * progress - 1)
+            .clamp(0.0, width > 2 ? width - 2 : 0.0)
+            .toDouble();
+        return GestureDetector(
+          key: const Key('recording_waveform'),
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) => _handleTap(details.localPosition.dx, width),
+          onHorizontalDragStart: (details) {
+            _setDragProgress(
+              _progressFor(details.localPosition.dx, width),
+              immediate: true,
+            );
+          },
+          onHorizontalDragUpdate: (details) {
+            _setDragProgress(
+              _progressFor(details.localPosition.dx, width),
+              immediate: false,
+            );
+          },
+          onHorizontalDragEnd: (_) => _finishDrag(),
+          onHorizontalDragCancel: _finishDrag,
+          child: SizedBox(
+            height: 112,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CustomPaint(
+                  painter: _WaveformPainter(
+                    waveform: widget.waveform,
+                    progress: progress,
+                    durationSeconds: widget.durationSeconds,
+                    events: widget.events,
+                    colors: colors,
+                  ),
+                ),
+                Positioned(
+                  key: const Key('recording_playhead'),
+                  left: playheadLeft,
+                  top: 8,
+                  bottom: 8,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: colors.primaryDark,
+                        borderRadius: BorderRadius.circular(2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.primaryDark.withValues(alpha: 0.35),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WaveformPainter extends CustomPainter {
+  const _WaveformPainter({
+    required this.waveform,
+    required this.progress,
+    required this.durationSeconds,
+    required this.events,
+    required this.colors,
+  });
+
+  final List<double> waveform;
+  final double progress;
+  final double durationSeconds;
+  final List<SoundEvent> events;
+  final SnorerThemePalette colors;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final track = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(18),
+    );
+    canvas.drawRRect(track, Paint()..color = colors.surfaceSoft);
+    if (waveform.isEmpty || size.width <= 0) return;
+
+    final slotWidth = size.width / waveform.length;
+    for (var index = 0; index < waveform.length; index += 1) {
+      final amplitude = waveform[index].clamp(0.08, 1.0).toDouble();
+      final height = 10 + amplitude * (size.height - 28);
+      final left = index * slotWidth + slotWidth * 0.2;
+      final barWidth = (slotWidth * 0.6).clamp(2.0, 8.0).toDouble();
+      final start = index / waveform.length * durationSeconds;
+      final end = (index + 1) / waveform.length * durationSeconds;
+      final eventColor = _eventColor(start, end);
+      final played = (index + 0.5) / waveform.length <= progress;
+      final color = eventColor ??
+          (played ? colors.primary : colors.waveInactive).withValues(
+            alpha: played ? 1 : 0.72,
+          );
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          left,
+          (size.height - height) / 2,
+          barWidth,
+          height,
+        ),
+        const Radius.circular(8),
+      );
+      canvas.drawRRect(rect, Paint()..color = color);
+    }
+
+    for (final event in events) {
+      final markerProgress =
+          (event.startSeconds / durationSeconds).clamp(0, 1).toDouble();
+      final markerColor = event.kind == SoundEventKind.snoring
+          ? colors.danger
+          : colors.warning;
+      canvas.drawCircle(
+        Offset(markerProgress * size.width, size.height - 6),
+        3,
+        Paint()..color = markerColor,
+      );
+    }
+  }
+
+  Color? _eventColor(double start, double end) {
+    for (final event in events) {
       if (event.startSeconds < end && event.endSeconds > start) {
         return event.kind == SoundEventKind.snoring
             ? colors.danger
@@ -918,29 +1112,20 @@ class _RecordingPlayerCard extends StatelessWidget {
     }
     return null;
   }
-}
-
-class _WaveBar extends StatelessWidget {
-  const _WaveBar({required this.height, required this.color});
-
-  final double height;
-  final Color color;
 
   @override
-  Widget build(BuildContext context) => AnimatedContainer(
-    duration: const Duration(milliseconds: 150),
-    height: height,
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(10),
-    ),
-  );
+  bool shouldRepaint(covariant _WaveformPainter oldDelegate) => true;
 }
 
 class _EventChip extends StatelessWidget {
-  const _EventChip({required this.color, required this.text});
+  const _EventChip({
+    required this.color,
+    required this.icon,
+    required this.text,
+  });
 
   final Color color;
+  final IconData icon;
   final String text;
 
   @override
@@ -951,13 +1136,20 @@ class _EventChip extends StatelessWidget {
     ),
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 15),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     ),
   );

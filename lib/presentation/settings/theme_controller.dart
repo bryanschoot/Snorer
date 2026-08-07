@@ -7,6 +7,7 @@ class ThemeController extends ChangeNotifier {
   ThemeController({required this._preferences});
 
   final ThemePreferences _preferences;
+  Future<void> _saveQueue = Future<void>.value();
   SnorerThemeMode _mode = SnorerThemeMode.dark;
 
   SnorerThemeMode get mode => _mode;
@@ -15,11 +16,12 @@ class ThemeController extends ChangeNotifier {
     _mode = await _preferences.load();
     notifyListeners();
   }
-
   Future<void> setMode(SnorerThemeMode mode) async {
     if (_mode == mode) return;
     _mode = mode;
     notifyListeners();
-    await _preferences.save(mode);
+    final save = _saveQueue.then((_) => _preferences.save(mode));
+    _saveQueue = save.catchError((_) {});
+    await save;
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +38,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.mode, SnorerThemeMode.pink);
+    expect(find.byKey(const Key('theme_selected_pink')), findsOneWidget);
     expect(preferences.savedMode, SnorerThemeMode.pink);
     expect(
       Theme.of(
@@ -97,6 +99,28 @@ void main() {
     expect(languagePreferences.savedLanguage, SnorerLanguage.english);
     expect(find.text('Settings'), findsOneWidget);
   });
+
+  test('serializes rapid theme changes and keeps the latest choice', () async {
+    final preferences = _SlowThemePreferences();
+    final controller = ThemeController(preferences: preferences);
+    await controller.initialize();
+
+    final firstSave = controller.setMode(SnorerThemeMode.light);
+    final secondSave = controller.setMode(SnorerThemeMode.pink);
+
+    await Future<void>.delayed(Duration.zero);
+    expect(preferences.savedModes, [SnorerThemeMode.light]);
+    preferences.gates.first.complete();
+    await firstSave;
+    await Future<void>.delayed(Duration.zero);
+    expect(preferences.savedModes, [
+      SnorerThemeMode.light,
+      SnorerThemeMode.pink,
+    ]);
+    preferences.gates.last.complete();
+    await secondSave;
+    expect(controller.mode, SnorerThemeMode.pink);
+  });
 }
 
 class _MemoryThemePreferences implements ThemePreferences {
@@ -113,6 +137,21 @@ class _MemoryThemePreferences implements ThemePreferences {
   Future<void> save(SnorerThemeMode mode) async {
     _mode = mode;
     savedMode = mode;
+  }
+}
+class _SlowThemePreferences implements ThemePreferences {
+  final savedModes = <SnorerThemeMode>[];
+  final gates = <Completer<void>>[];
+
+  @override
+  Future<SnorerThemeMode> load() async => SnorerThemeMode.dark;
+
+  @override
+  Future<void> save(SnorerThemeMode mode) async {
+    savedModes.add(mode);
+    final gate = Completer<void>();
+    gates.add(gate);
+    await gate.future;
   }
 }
 
