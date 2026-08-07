@@ -22,6 +22,7 @@ interface RecordingPlayer {
   isPlaying: boolean;
   error: string | null;
   pause: () => void;
+  seekTo: (seconds: number) => Promise<void>;
   togglePlayback: () => Promise<void>;
 }
 
@@ -80,6 +81,23 @@ export function useRecordingPlayer(selectedRecording: StoredRecording | null): R
   const duration = playerStatus.duration || selectedRecording?.durationSeconds || 0;
   const progress =
     duration > 0 ? Math.min(1, Math.max(0, playerStatus.currentTime / duration)) : 0;
+  const seekTo = useCallback(
+    async (seconds: number) => {
+      if (!selectedRecording || duration <= 0) {
+        return;
+      }
+
+      try {
+        setError(null);
+        await player.seekTo(Math.min(duration, Math.max(0, seconds)));
+      } catch (cause) {
+        const message = cause instanceof Error ? cause.message : 'Onbekende afspeelfout';
+        setError(`Naar dit moment springen lukt niet: ${message}`);
+      }
+    },
+    [duration, player, selectedRecording],
+  );
+
 
   return {
     currentTime: playerStatus.currentTime,
@@ -88,6 +106,7 @@ export function useRecordingPlayer(selectedRecording: StoredRecording | null): R
     isPlaying: player.playing,
     error,
     pause,
+    seekTo,
     togglePlayback,
   };
 }

@@ -1,32 +1,45 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
+import type { TfliteModel } from 'react-native-fast-tflite';
 import {
-  getRecordingPermissionsAsync,
-  RecordingPresets,
-  requestNotificationPermissionsAsync,
-  requestRecordingPermissionsAsync,
-  setAudioModeAsync,
-  type RecordingStatus,
-  useAudioRecorder,
-  useAudioRecorderState,
-} from 'expo-audio';
+  AudioManager,
+  AudioRecorder,
+  FileDirectory,
+  FileFormat,
+  FilePreset,
+} from 'react-native-audio-api';
 
-import type { RecordingDraft } from '../recording-types';
+import type { RecordingDraft, SoundEvent } from '../recording-types';
+import { loadSoundModel } from '../sound-model';
+import {
+  appendSoundEvent,
+  classifyYamnetScores,
+  createYamnetFrame,
+  YAMNET_SAMPLE_RATE,
+  YAMNET_WINDOW_SAMPLES,
+} from '../sound-detection';
 
-const recordingOptions = {
-  ...RecordingPresets.HIGH_QUALITY,
-  directory: 'document' as const,
+const recordingFileOptions = {
+  format: FileFormat.M4A,
+  preset: FilePreset.High,
+  directory: FileDirectory.Document,
+  channelCount: 1,
 };
 
-const recordingAudioMode = {
-  allowsRecording: true,
-  allowsBackgroundRecording: true,
-  playsInSilentMode: true,
-  shouldPlayInBackground: true,
-  interruptionMode: 'doNotMix' as const,
+const audioCallbackOptions = {
+  sampleRate: YAMNET_SAMPLE_RATE,
+  bufferLength: YAMNET_SAMPLE_RATE / 10,
+  channelCount: 1,
+};
+
+const recordingSessionOptions = {
+  iosCategory: 'record' as const,
+  iosMode: 'default' as const,
+  iosOptions: [],
 };
 
 export type StartRecordingResult = 'started' | 'permission-denied' | 'failed';
+export type SoundDetectionStatus = 'idle' | 'loading' | 'ready' | 'unavailable';
 
 interface SleepRecorder {
   permissionGranted: boolean | null;
@@ -35,25 +48,37 @@ interface SleepRecorder {
   isRecording: boolean;
   durationSeconds: number;
   error: string | null;
+  soundDetectionStatus: SoundDetectionStatus;
   startRecording: () => Promise<StartRecordingResult>;
   stopRecording: () => Promise<void>;
 }
 
 export function useSleepRecorder(onRecordingFinished: (draft: RecordingDraft) => void): SleepRecorder {
+  const [recorder] = useState(() => new AudioRecorder());
+
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [durationSeconds, setDurationSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [soundDetectionStatus, setSoundDetectionStatus] =
+    useState<SoundDetectionStatus>('idle');
   const activeStartedAtRef = useRef<string | null>(null);
-  const finalizingRef = useRef(false);
+  const sampleBufferRef = useRef<number[]>([]);
+  const processedSamplesRef = useRef(0);
+  const soundEventsRef = useRef<SoundEvent[]>([]);
+  const analysisQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const modelRef = useRef<TfliteModel | null>(null);
+  const modelPromiseRef = useRef<Promise<TfliteModel | null> | null>(null);
 
   useEffect(() => {
     let isActive = true;
 
-    void getRecordingPermissionsAsync()
-      .then((response) => {
+    void AudioManager.checkRecordingPermissions()
+      .then((status) => {
         if (isActive) {
-          setPermissionGranted(response.granted);
+          setPermissionGranted(status === 'Granted');
         }
       })
       .catch(() => {
@@ -62,129 +87,266 @@ export function useSleepRecorder(onRecordingFinished: (draft: RecordingDraft) =>
         }
       });
 
-    void setAudioModeAsync(recordingAudioMode).catch(() => {
-      // Audio mode is configured again immediately before recording.
-    });
-
     return () => {
       isActive = false;
     };
   }, []);
 
-  const finalizeRecording = useCallback(
-    (uri: string | null, durationOverride?: number) => {
-      const startedAt = activeStartedAtRef.current;
-      if (!uri || !startedAt || finalizingRef.current) {
-        return;
-      }
+  const queueSoundFrame = useCallback((frame: Float32Array, startSeconds: number) => {
+    const model = modelRef.current;
+    if (!model) {
+      return;
+    }
 
-      finalizingRef.current = true;
-      activeStartedAtRef.current = null;
-      const startedAtMillis = new Date(startedAt).getTime();
-      const elapsedSeconds = Number.isFinite(startedAtMillis)
-        ? Math.max(1, Math.round((Date.now() - startedAtMillis) / 1000))
-        : 1;
-      const durationSeconds = Math.max(1, durationOverride ?? elapsedSeconds);
+    const frameBuffer = frame.buffer.slice(
+      frame.byteOffset,
+      frame.byteOffset + frame.byteLength,
+    ) as ArrayBuffer;
+    analysisQueueRef.current = analysisQueueRef.current
+      .then(async () => {
+        const outputs = await model.run([frameBuffer]);
+        const output = outputs[0];
+        if (!output) {
+          return;
+        }
 
-      try {
-        onRecordingFinished({ uri, startedAt, durationSeconds });
-        setError(null);
-      } finally {
-        finalizingRef.current = false;
+        const classification = classifyYamnetScores(new Float32Array(output));
+        if (classification) {
+          soundEventsRef.current = appendSoundEvent(
+            soundEventsRef.current,
+            classification,
+            startSeconds,
+          );
+        }
+      })
+      .catch(() => {
+        setSoundDetectionStatus('unavailable');
+      });
+  }, []);
+
+  const handleAudioBuffer = useCallback(
+    (samples: Float32Array, sampleRate: number) => {
+      const normalizedSamples =
+        sampleRate === YAMNET_SAMPLE_RATE
+          ? samples
+          : (() => {
+              if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
+                return samples;
+              }
+
+              const ratio = YAMNET_SAMPLE_RATE / sampleRate;
+              const outputLength = Math.max(1, Math.round(samples.length * ratio));
+              const resampled = new Float32Array(outputLength);
+
+              for (let index = 0; index < outputLength; index += 1) {
+                const sourceIndex = index / ratio;
+                const leftIndex = Math.min(Math.floor(sourceIndex), samples.length - 1);
+                const rightIndex = Math.min(leftIndex + 1, samples.length - 1);
+                const mix = sourceIndex - leftIndex;
+                resampled[index] =
+                  (samples[leftIndex] ?? 0) * (1 - mix) + (samples[rightIndex] ?? 0) * mix;
+              }
+
+              return resampled;
+            })();
+
+      sampleBufferRef.current.push(...normalizedSamples);
+
+      while (sampleBufferRef.current.length >= YAMNET_WINDOW_SAMPLES) {
+        const frameSamples = sampleBufferRef.current.splice(0, YAMNET_WINDOW_SAMPLES);
+        const frame = createYamnetFrame(frameSamples);
+        if (!frame) {
+          break;
+        }
+
+        const startSeconds = processedSamplesRef.current / YAMNET_SAMPLE_RATE;
+        processedSamplesRef.current += YAMNET_WINDOW_SAMPLES;
+        queueSoundFrame(frame, startSeconds);
       }
     },
-    [onRecordingFinished],
+    [queueSoundFrame],
   );
 
-  const handleRecorderStatus = useCallback(
-    (status: RecordingStatus) => {
-      if (status.hasError) {
-        setError(status.error ?? 'De opname werd door Android onderbroken.');
+  useEffect(() => {
+    const callbackResult = recorder.onAudioReady(audioCallbackOptions, ({ buffer }) => {
+      handleAudioBuffer(buffer.getChannelData(0), buffer.sampleRate);
+    });
+
+    if (callbackResult.status === 'error') {
+      setSoundDetectionStatus('unavailable');
+    }
+
+    recorder.onError(({ message }) => {
+      setError(`Audio-opnamefout: ${message}`);
+    });
+
+    return () => {
+      recorder.clearOnAudioReady();
+      recorder.clearOnError();
+    };
+  }, [handleAudioBuffer, recorder]);
+
+  useEffect(() => {
+    if (!isRecording) {
+      return;
+    }
+
+    const updateDuration = () => {
+      setDurationSeconds(recorder.getCurrentDuration());
+    };
+
+    updateDuration();
+    const interval = setInterval(updateDuration, 500);
+    return () => clearInterval(interval);
+  }, [isRecording, recorder]);
+
+  const ensureSoundModel = useCallback(async (): Promise<TfliteModel | null> => {
+    if (!modelPromiseRef.current) {
+      setSoundDetectionStatus('loading');
+      modelPromiseRef.current = loadSoundModel();
+    }
+
+    try {
+      const model = await modelPromiseRef.current;
+      if (!model) {
+        setSoundDetectionStatus('unavailable');
+        return null;
       }
 
-      if (status.isFinished && status.url) {
-        finalizeRecording(status.url);
-      }
-    },
-    [finalizeRecording],
-  );
+      modelRef.current = model;
+      setSoundDetectionStatus('ready');
+      return model;
+    } catch {
+      modelPromiseRef.current = null;
+      modelRef.current = null;
+      setSoundDetectionStatus('unavailable');
+      return null;
+    }
+  }, []);
 
-  const recorder = useAudioRecorder(recordingOptions, handleRecorderStatus);
-  const recorderState = useAudioRecorderState(recorder, 500);
+  const resetSoundDetection = useCallback(() => {
+    sampleBufferRef.current = [];
+    processedSamplesRef.current = 0;
+    soundEventsRef.current = [];
+    analysisQueueRef.current = Promise.resolve();
+  }, []);
+
+  const flushSoundDetection = useCallback(() => {
+    const frame = createYamnetFrame(sampleBufferRef.current);
+    if (frame) {
+      queueSoundFrame(frame, processedSamplesRef.current / YAMNET_SAMPLE_RATE);
+    }
+    sampleBufferRef.current = [];
+  }, [queueSoundFrame]);
 
   const configureRecordingAudio = useCallback(async (): Promise<boolean> => {
-    const response = await requestRecordingPermissionsAsync();
-    setPermissionGranted(response.granted);
-    if (!response.granted) {
+    const permission = await AudioManager.requestRecordingPermissions();
+    const granted = permission === 'Granted';
+    setPermissionGranted(granted);
+    if (!granted) {
       return false;
     }
 
     if (Platform.OS === 'android') {
-      await requestNotificationPermissionsAsync().catch(() => undefined);
+      await AudioManager.requestNotificationPermissions().catch(() => undefined);
     }
 
-    await setAudioModeAsync(recordingAudioMode);
+    AudioManager.setAudioSessionOptions(recordingSessionOptions);
+    await AudioManager.setAudioSessionActivity(true);
     return true;
   }, []);
 
   const startRecording = useCallback(async (): Promise<StartRecordingResult> => {
-    if (recorderState.isRecording || isStarting) {
+    if (isRecording || isStarting) {
       return 'failed';
     }
 
     setError(null);
     setIsStarting(true);
+    resetSoundDetection();
+
     try {
       const allowed = await configureRecordingAudio();
       if (!allowed) {
-        setError('Geef Snorer toegang tot de microfoon om slaapgeluiden lokaal op te nemen.');
+        setError('Geef Snorer toegang tot de microfoon om slaapgeluiden lokaal te analyseren.');
         return 'permission-denied';
       }
 
-      await recorder.prepareToRecordAsync();
+      const outputResult = recorder.enableFileOutput(recordingFileOptions);
+      if (outputResult.status === 'error') {
+        throw new Error(outputResult.message);
+      }
+
+      await ensureSoundModel();
+      const result = await recorder.start();
+      if (result.status === 'error') {
+        throw new Error(result.message);
+      }
+
       activeStartedAtRef.current = new Date().toISOString();
-      recorder.record();
+      setDurationSeconds(0);
+      setIsRecording(true);
       return 'started';
     } catch (cause) {
       activeStartedAtRef.current = null;
+      await AudioManager.setAudioSessionActivity(false).catch(() => undefined);
       const message = cause instanceof Error ? cause.message : 'Onbekende audiofout';
       setError(`Opname starten lukt niet: ${message}`);
       return 'failed';
     } finally {
       setIsStarting(false);
     }
-  }, [configureRecordingAudio, isStarting, recorder, recorderState.isRecording]);
+  }, [configureRecordingAudio, ensureSoundModel, isRecording, isStarting, recorder, resetSoundDetection]);
 
   const stopRecording = useCallback(async () => {
-    if (!recorderState.isRecording || isStopping) {
+    if (!isRecording || isStopping) {
       return;
     }
 
     setIsStopping(true);
     const startedAt = activeStartedAtRef.current;
-    const startedAtMillis = startedAt ? new Date(startedAt).getTime() : Number.NaN;
-    const elapsedSeconds = Number.isFinite(startedAtMillis)
-      ? Math.max(1, Math.round((Date.now() - startedAtMillis) / 1000))
-      : undefined;
 
     try {
-      await recorder.stop();
-      finalizeRecording(recorder.uri, elapsedSeconds);
+      const result = await recorder.stop();
+      if (result.status === 'error') {
+        throw new Error(result.message);
+      }
+
+      flushSoundDetection();
+      await analysisQueueRef.current;
+      await AudioManager.setAudioSessionActivity(false).catch(() => undefined);
+
+      const uri = result.paths[0];
+      if (!uri || !startedAt) {
+        throw new Error('De opname heeft geen geldig bestand opgeleverd.');
+      }
+
+      onRecordingFinished({
+        uri,
+        startedAt,
+        durationSeconds: Math.max(1, Math.round(result.duration)),
+        soundEvents: soundEventsRef.current,
+      });
+      activeStartedAtRef.current = null;
+      setIsRecording(false);
+      setDurationSeconds(result.duration);
+      setError(null);
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Onbekende audiofout';
       setError(`Opname stoppen lukt niet: ${message}`);
     } finally {
       setIsStopping(false);
     }
-  }, [finalizeRecording, isStopping, recorder, recorderState.isRecording]);
+  }, [flushSoundDetection, isRecording, isStopping, onRecordingFinished, recorder]);
 
   return {
     permissionGranted,
     isStarting,
     isStopping,
-    isRecording: recorderState.isRecording,
-    durationSeconds: recorderState.isRecording ? recorderState.durationMillis / 1000 : 0,
+    isRecording,
+    durationSeconds,
     error,
+    soundDetectionStatus,
     startRecording,
     stopRecording,
   };

@@ -1,17 +1,19 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Badge, BadgeText } from '../../../../components/ui/badge';
 import { colors } from '../../../theme';
 import { formatClock, formatDate, formatDuration, getRecordingLabelText } from '../recording-utils';
 import type { StoredRecording } from '../recording-types';
 
 const waveformBars = [0.35, 0.58, 0.82, 0.46, 0.67, 0.94, 0.52, 0.73, 0.39, 0.63, 0.88, 0.5, 0.76, 0.42, 0.6];
-
 interface RecordingPlayerCardProps {
   recording: StoredRecording;
   currentTime: number;
   duration: number;
   progress: number;
   isPlaying: boolean;
+  onSeek: (seconds: number) => Promise<void>;
   onTogglePlayback: () => void;
 }
 
@@ -21,23 +23,50 @@ export function RecordingPlayerCard({
   duration,
   progress,
   isPlaying,
+  onSeek,
   onTogglePlayback,
 }: RecordingPlayerCardProps) {
+  const [waveformWidth, setWaveformWidth] = useState(0);
+  const timelineDuration = Math.max(recording.durationSeconds, duration, 1);
+  const snoringCount = recording.soundEvents.filter((event) => event.kind === 'snoring').length;
+  const speechCount = recording.soundEvents.filter((event) => event.kind === 'speech').length;
+
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
-        <View style={styles.waveform} accessibilityLabel="Lokale opname">
-          {waveformBars.map((height, index) => (
-            <View
-              key={`wave-${index}`}
-              style={[
-                styles.waveBar,
-                { height: 14 + height * 28 },
-                index / waveformBars.length <= progress && styles.waveBarActive,
-              ]}
-            />
-          ))}
-        </View>
+        <Pressable
+          style={styles.waveform}
+          onLayout={({ nativeEvent }) => setWaveformWidth(nativeEvent.layout.width)}
+          onPress={({ nativeEvent }) => {
+            if (waveformWidth > 0) {
+              void onSeek((nativeEvent.locationX / waveformWidth) * timelineDuration);
+            }
+          }}
+          accessibilityRole="adjustable"
+          accessibilityLabel={`Lokale opname, ${snoringCount} snurkmomenten en ${speechCount} praatmomenten`}
+          accessibilityHint="Tik op de tijdlijn om naar dat moment te springen."
+        >
+          {waveformBars.map((height, index) => {
+            const segmentStart = (index / waveformBars.length) * timelineDuration;
+            const segmentEnd = ((index + 1) / waveformBars.length) * timelineDuration;
+            const detectedEvent = recording.soundEvents.find(
+              (event) => event.startSeconds < segmentEnd && event.endSeconds > segmentStart,
+            );
+
+            return (
+              <View
+                key={`wave-${index}`}
+                style={[
+                  styles.waveBar,
+                  { height: 14 + height * 28 },
+                  detectedEvent?.kind === 'snoring' && styles.waveBarSnoring,
+                  detectedEvent?.kind === 'speech' && styles.waveBarSpeech,
+                  !detectedEvent && index / waveformBars.length <= progress && styles.waveBarActive,
+                ]}
+              />
+            );
+          })}
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={isPlaying ? 'Pauzeer opname' : 'Speel opname af'}
@@ -55,6 +84,22 @@ export function RecordingPlayerCard({
       <Text style={styles.subtitle}>
         {getRecordingLabelText(recording.label)} · {formatDuration(recording.durationSeconds)}
       </Text>
+      {recording.soundEvents.length > 0 ? (
+        <View style={styles.eventLegend}>
+          <Badge variant="destructive">
+            <BadgeText>
+              {snoringCount} {snoringCount === 1 ? 'snurkmoment' : 'snurkmomenten'}
+            </BadgeText>
+          </Badge>
+          <Badge variant="secondary">
+            <BadgeText>
+              {speechCount} {speechCount === 1 ? 'praatmoment' : 'praatmomenten'}
+            </BadgeText>
+          </Badge>
+        </View>
+      ) : (
+        <Text style={styles.noEventsText}>Geen duidelijke snurk- of praatmomenten herkend.</Text>
+      )}
     </View>
   );
 }
@@ -88,6 +133,12 @@ const styles = StyleSheet.create({
   },
   waveBarActive: {
     backgroundColor: colors.primary,
+  },
+  waveBarSnoring: {
+    backgroundColor: colors.danger,
+  },
+  waveBarSpeech: {
+    backgroundColor: colors.warning,
   },
   playButton: {
     width: 54,
@@ -126,5 +177,16 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
     marginTop: 4,
+  },
+  eventLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 12,
+  },
+  noEventsText: {
+    color: colors.muted,
+    fontSize: 12,
+    marginTop: 12,
   },
 });

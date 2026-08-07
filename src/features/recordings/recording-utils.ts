@@ -17,6 +17,27 @@ export function isStoredRecording(value: unknown): value is StoredRecording {
     candidate.label === null ||
     candidate.label === 'snoring' ||
     candidate.label === 'sleep-talking';
+  const hasValidSoundEvents =
+    candidate.soundEvents === undefined ||
+    (Array.isArray(candidate.soundEvents) &&
+      candidate.soundEvents.every((event) => {
+        if (!event || typeof event !== 'object') {
+          return false;
+        }
+
+        const soundEvent = event as Record<string, unknown>;
+        return (
+          typeof soundEvent.id === 'string' &&
+          (soundEvent.kind === 'snoring' || soundEvent.kind === 'speech') &&
+          typeof soundEvent.startSeconds === 'number' &&
+          Number.isFinite(soundEvent.startSeconds) &&
+          typeof soundEvent.endSeconds === 'number' &&
+          Number.isFinite(soundEvent.endSeconds) &&
+          soundEvent.endSeconds >= soundEvent.startSeconds &&
+          typeof soundEvent.confidence === 'number' &&
+          Number.isFinite(soundEvent.confidence)
+        );
+      }));
 
   return (
     typeof candidate.id === 'string' &&
@@ -25,7 +46,8 @@ export function isStoredRecording(value: unknown): value is StoredRecording {
     typeof candidate.durationSeconds === 'number' &&
     Number.isFinite(candidate.durationSeconds) &&
     candidate.durationSeconds >= 0 &&
-    hasValidLabel
+    hasValidLabel &&
+    hasValidSoundEvents
   );
 }
 
@@ -43,6 +65,7 @@ export function parseStoredRecordings(raw: string | null): StoredRecording[] {
     return parsed.filter(isStoredRecording).map((recording) => ({
       ...recording,
       label: recording.label ?? null,
+      soundEvents: recording.soundEvents ?? [],
     }));
   } catch {
     return [];

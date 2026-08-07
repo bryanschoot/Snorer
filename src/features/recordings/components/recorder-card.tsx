@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '../../../theme';
+import type { SoundDetectionStatus } from '../hooks/use-sleep-recorder';
 import { formatClock } from '../recording-utils';
 
 interface RecorderCardProps {
@@ -8,6 +9,7 @@ interface RecorderCardProps {
   isRecording: boolean;
   isStarting: boolean;
   isStopping: boolean;
+  soundDetectionStatus: SoundDetectionStatus;
   onStart: () => void;
   onStop: () => void;
 }
@@ -17,10 +19,19 @@ export function RecorderCard({
   isRecording,
   isStarting,
   isStopping,
+  soundDetectionStatus,
   onStart,
   onStop,
 }: RecorderCardProps) {
   const isBusy = isStarting || isStopping;
+  const detectionHint =
+    soundDetectionStatus === 'ready'
+      ? 'Snurken en praten worden lokaal gemarkeerd.'
+      : soundDetectionStatus === 'loading'
+        ? 'Geluidsmodel wordt klaargemaakt…'
+        : soundDetectionStatus === 'unavailable'
+          ? 'Opname werkt, maar geluidslabels zijn niet beschikbaar.'
+          : 'Geluidslabels worden alleen op dit apparaat verwerkt.';
 
   return (
     <View style={styles.card}>
@@ -87,6 +98,7 @@ export function RecorderCard({
           Android houdt de opname actief met een zichtbare systeemmelding, ook als je scherm vergrendelt.
         </Text>
       </View>
+      <Text style={styles.analysisText}>{detectionHint}</Text>
     </View>
   );
 }
@@ -222,5 +234,11 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 12,
     lineHeight: 18,
+  },
+  analysisText: {
+    color: colors.primary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
   },
 });

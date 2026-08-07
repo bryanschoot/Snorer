@@ -7,7 +7,7 @@
     "userInterfaceStyle": "automatic",
     "scheme": "snorer",
     "android": {
-      "package": "com.bryanschoot.snorer"
+      "package": "com.bryanschoot.snorer",
     },
     "plugins": [
       [
@@ -19,6 +19,23 @@
           "enableBackgroundPlayback": true
         }
       ],
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": true,
+          "iosMicrophonePermission": "Snorer gebruikt je microfoon om slaapgeluiden lokaal te analyseren.",
+          "androidPermissions": [
+            "android.permission.RECORD_AUDIO",
+            "android.permission.FOREGROUND_SERVICE",
+            "android.permission.FOREGROUND_SERVICE_MICROPHONE"
+          ],
+          "androidForegroundService": true,
+          "androidFSTypes": [
+            "microphone"
+          ]
+        }
+      ],
+      "react-native-fast-tflite",
       "expo-status-bar",
       "expo-asset"
     ]

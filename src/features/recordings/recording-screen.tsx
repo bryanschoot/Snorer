@@ -115,6 +115,7 @@ export function RecordingScreen() {
   );
 
   const handleStartRecording = useCallback(() => {
+    player.pause();
     void recorder.startRecording().then((result) => {
       if (result === 'permission-denied') {
         Alert.alert(
@@ -123,7 +124,7 @@ export function RecordingScreen() {
         );
       }
     });
-  }, [recorder.startRecording]);
+  }, [player.pause, recorder.startRecording]);
 
   const error = recorder.error ?? player.error ?? library.error;
 
@@ -144,6 +145,7 @@ export function RecordingScreen() {
           isRecording={recorder.isRecording}
           isStarting={recorder.isStarting}
           isStopping={recorder.isStopping}
+          soundDetectionStatus={recorder.soundDetectionStatus}
           onStart={handleStartRecording}
           onStop={() => void recorder.stopRecording()}
         />
@@ -170,6 +172,7 @@ export function RecordingScreen() {
               duration={player.duration}
               progress={player.progress}
               isPlaying={player.isPlaying}
+              onSeek={player.seekTo}
               onTogglePlayback={() => void player.togglePlayback()}
             />
           ) : (
