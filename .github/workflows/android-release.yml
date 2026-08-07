@@ -25,7 +25,7 @@ env:
 
 jobs:
   build-and-publish:
-    name: Build, sign, and publish APK
+    name: Build and publish APK
     runs-on: ubuntu-24.04
     steps:
       - name: Check out release source
@@ -51,7 +51,7 @@ jobs:
       - name: Validate release tag and package version
         run: node scripts/verify-release-version.cjs "$RELEASE_TAG"
 
-      - name: Configure release signing
+      - name: Configure optional release signing
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -59,12 +59,25 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
+          configured=0
           for name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Missing required repository secret: $name"
-              exit 1
+            if [ -n "${!name}" ]; then
+              configured=$((configured + 1))
             fi
           done
+          if [ "$configured" -eq 0 ]; then
+            echo "::warning::No Android release keystore configured; using the debug keystore for this installable APK."
+            echo "SIGNING_MODE=debug" >> "$GITHUB_ENV"
+            {
+              echo "### APK signing"
+              echo "Debug keystore fallback (not suitable for Play Store publication or production updates)."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "$configured" -ne 4 ]; then
+            echo "::error::Configure all four Android signing secrets, or remove all of them for debug signing."
+            exit 1
+          fi
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/release-key.jks
           cat > android/key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
@@ -72,6 +85,11 @@ jobs:
           keyAlias=$ANDROID_KEY_ALIAS
           storeFile=release-key.jks
           EOF
+          echo "SIGNING_MODE=release" >> "$GITHUB_ENV"
+          {
+            echo "### APK signing"
+            echo "Configured Android release keystore."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install Dart dependencies
         run: flutter pub get
