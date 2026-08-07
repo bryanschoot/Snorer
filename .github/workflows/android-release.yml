@@ -1,0 +1,121 @@
+name: Android release
+
+run-name: Android release ${{ inputs.tag || github.ref_name }}
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing vMAJOR.MINOR.PATCH tag to build and publish
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    name: Build and publish APK
+    runs-on: ubuntu-24.04
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          yes | "${sdkmanager}" --sdk_root="${ANDROID_HOME}" --licenses >/dev/null
+          "${sdkmanager}" --sdk_root="${ANDROID_HOME}" \
+            'platform-tools' \
+            'platforms;android-36' \
+            'build-tools;36.0.0' \
+            'ndk;27.1.12297006' \
+            'cmake;3.22.1'
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/verify-release-version.cjs "${RELEASE_TAG}" | tee "${GITHUB_OUTPUT}"
+
+      - name: Generate Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK
+        working-directory: android
+        run: ./gradlew :app:assembleRelease --no-daemon
+
+      - name: Verify and package APK
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="Snorer-${{ steps.version.outputs.version }}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "${apk}"
+          "${ANDROID_HOME}/build-tools/36.0.0/apksigner" verify --verbose "${apk}"
+          sha256sum "${apk}" > "${apk}.sha256"
+          echo "path=${apk}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snorer-${{ steps.version.outputs.version }}
+          path: |
+            ${{ steps.apk.outputs.path }}
+            ${{ steps.apk.outputs.path }}.sha256
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" \
+              "${{ steps.apk.outputs.path }}" \
+              "${{ steps.apk.outputs.path }}.sha256" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --clobber
+          else
+            gh release create "${RELEASE_TAG}" \
+              "${{ steps.apk.outputs.path }}" \
+              "${{ steps.apk.outputs.path }}.sha256" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "Snorer ${RELEASE_TAG}" \
+              --generate-notes
+          fi

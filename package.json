@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release:check": "node scripts/verify-release-version.cjs"
   },
   "dependencies": {
     "@expo/html-elements": "^0.12.5",
