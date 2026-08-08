@@ -43,10 +43,19 @@ class RecordingsViewModel extends ChangeNotifier {
   SnorerError? _libraryError;
   bool _isHydrated = false;
   bool _disposed = false;
+  double _completedDurationSeconds = 0;
 
   List<StoredRecording> get recordings => List.unmodifiable(_recordings);
   AudioRecordingState get recorderState => _recorderState;
   AudioPlaybackState get playerState => _playerState;
+  double get displayedDurationSeconds {
+    final stateDuration = _recorderState.durationSeconds;
+    if (_recorderState.isBusy || _recorderState.isRecording) {
+      return stateDuration;
+    }
+    return stateDuration > 0 ? stateDuration : _completedDurationSeconds;
+  }
+
   bool get isHydrated => _isHydrated;
   SnorerError? get error =>
       _recorderState.error ?? _playerState.error ?? _libraryError;
@@ -74,6 +83,8 @@ class RecordingsViewModel extends ChangeNotifier {
   }
 
   Future<void> startRecording() async {
+    _completedDurationSeconds = 0;
+    notifyListeners();
     await _player.pause();
     final result = await _recorder.start();
     if (result == RecordingStartResult.permissionDenied) {
@@ -87,6 +98,7 @@ class RecordingsViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    _completedDurationSeconds = draft.durationSeconds;
 
     final recording = StoredRecording(
       id: _createRecordingId(),

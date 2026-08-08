@@ -8,11 +8,13 @@ import 'package:snorer/core/theme/app_theme.dart';
 import 'package:snorer/data/repositories/recording_repository.dart';
 import 'package:snorer/data/services/audio_playback_service.dart';
 import 'package:snorer/data/services/audio_recording_service.dart';
+import 'package:snorer/data/services/app_update_service.dart';
 import 'package:snorer/data/services/language_preferences.dart';
 import 'package:snorer/data/services/theme_preferences.dart';
 import 'package:snorer/domain/models/recording.dart';
 import 'package:snorer/presentation/recordings/recordings_screen.dart';
 import 'package:snorer/presentation/recordings/recordings_view_model.dart';
+import 'package:snorer/presentation/update/update_controller.dart';
 import 'package:snorer/presentation/settings/language_controller.dart';
 import 'package:snorer/presentation/settings/settings_screen.dart';
 import 'package:snorer/presentation/settings/theme_controller.dart';
@@ -63,7 +65,7 @@ void main() {
 
     expect(viewModel.recordings.single.label, RecordingLabel.snoring);
   });
-  testWidgets('moves the waveform playhead with playback state', (
+  testWidgets('shows waveform duration without playback controls', (
     tester,
   ) async {
     final recording = StoredRecording(
@@ -74,8 +76,7 @@ void main() {
       soundEvents: const [],
       label: null,
     );
-    final player = _FakePlayer();
-    final viewModel = _createViewModel([recording], player: player);
+    final viewModel = _createViewModel([recording]);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -84,83 +85,28 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
     final scrollable = find.byType(Scrollable);
     await tester.scrollUntilVisible(
-      find.byKey(const Key('recording_playhead')),
+      find.byKey(const Key('recording_waveform')),
       500,
       scrollable: scrollable,
     );
 
-    player.emit(
-      const AudioPlaybackState(
-        recordingId: 'night-1',
-        currentSeconds: 50,
-        durationSeconds: 100,
-        isPlaying: true,
-      ),
+    expect(find.byKey(const Key('recording_waveform')), findsOneWidget);
+    expect(find.byKey(const Key('toggle_playback')), findsNothing);
+    expect(find.byType(Slider), findsNothing);
+    expect(find.byKey(const Key('recording_playhead')), findsNothing);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('waveform_start_time'))).data,
+      '00:00',
     );
-    await tester.pump();
-
-    final waveform = find.byKey(const Key('recording_waveform'));
-    final waveformLeft = tester.getTopLeft(waveform).dx;
-    final waveformWidth = tester.getSize(waveform).width;
-    final updatedLeft = tester.getTopLeft(
-      find.byKey(const Key('recording_playhead')),
+    expect(
+      tester.widget<Text>(find.byKey(const Key('waveform_end_time'))).data,
+      '03:05',
     );
-    expect(updatedLeft.dx, closeTo(waveformLeft + waveformWidth / 2 - 1, 2));
-    player.emit(
-      const AudioPlaybackState(
-        recordingId: 'night-1',
-        currentSeconds: 100,
-        durationSeconds: 100,
-        isPlaying: false,
-      ),
-    );
-    await tester.pump();
-
-    final endLeft = tester.getTopLeft(
-      find.byKey(const Key('recording_playhead')),
-    );
-    expect(endLeft.dx, closeTo(waveformLeft + waveformWidth - 2, 2));
   });
-  testWidgets('seeks from the waveform timeline', (tester) async {
-    final recording = StoredRecording(
-      id: 'night-1',
-      audioPath: '/tmp/night-1.wav',
-      startedAt: DateTime.parse('2026-08-07T22:30:00Z'),
-      durationSeconds: 185,
-      soundEvents: const [],
-      label: null,
-    );
-    final player = _FakePlayer();
-    final viewModel = _createViewModel([recording], player: player);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: buildSnorerTheme(),
-        home: RecordingsScreen(viewModel: viewModel),
-      ),
-    );
-    await tester.pumpAndSettle();
-    final scrollable = find.byType(Scrollable);
-    final waveform = find.byKey(const Key('recording_waveform'));
-    await tester.scrollUntilVisible(waveform, 500, scrollable: scrollable);
-    player.emit(
-      const AudioPlaybackState(
-        recordingId: 'night-1',
-        durationSeconds: 100,
-        waveform: [0.2, 0.8, 0.4, 1.0],
-      ),
-    );
-    await tester.pump();
-
-    final rect = tester.getRect(waveform);
-    await tester.tapAt(Offset(rect.left + rect.width * 0.75, rect.center.dy));
-    await tester.pump();
-
-    expect(player.lastSeekSeconds, closeTo(75, 1));
-  });
-  testWidgets('filters detected sounds and steps to matching moments', (
+  testWidgets('keeps detected sound markers with the waveform', (
     tester,
   ) async {
     final recording = StoredRecording(
@@ -183,25 +129,10 @@ void main() {
           endSeconds: 22,
           confidence: 0.8,
         ),
-        SoundEvent(
-          id: 'snore-2',
-          kind: SoundEventKind.snoring,
-          startSeconds: 50,
-          endSeconds: 53,
-          confidence: 0.85,
-        ),
-        SoundEvent(
-          id: 'speech-2',
-          kind: SoundEventKind.speech,
-          startSeconds: 80,
-          endSeconds: 82,
-          confidence: 0.75,
-        ),
       ],
       label: null,
     );
-    final player = _FakePlayer();
-    final viewModel = _createViewModel([recording], player: player);
+    final viewModel = _createViewModel([recording]);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -210,49 +141,19 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
     final scrollable = find.byType(Scrollable);
     await tester.scrollUntilVisible(
-      find.byKey(const Key('event_filter_all')),
+      find.byKey(const Key('recording_waveform')),
       500,
       scrollable: scrollable,
     );
 
-    expect(find.text('Gedetecteerde geluiden'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('event_filter_snoring')));
-    await tester.pump();
-    expect(find.text('0 van 2'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('next_sound_event')));
-    expect(player.lastSeekSeconds, closeTo(10, 0.01));
-    player.emit(
-      const AudioPlaybackState(
-        recordingId: 'night-1',
-        currentSeconds: 10,
-        durationSeconds: 185,
-      ),
-    );
-    await tester.pump();
-    expect(find.text('1 van 2'), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('next_sound_event')));
-    expect(player.lastSeekSeconds, closeTo(50, 0.01));
-    player.emit(
-      const AudioPlaybackState(
-        recordingId: 'night-1',
-        currentSeconds: 50,
-        durationSeconds: 185,
-      ),
-    );
-    await tester.pump();
-
-    await tester.tap(find.byKey(const Key('previous_sound_event')));
-    expect(player.lastSeekSeconds, closeTo(10, 0.01));
-
-    await tester.tap(find.byKey(const Key('event_filter_speech')));
-    await tester.pump();
-    expect(find.text('1 van 2'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('next_sound_event')));
-    expect(player.lastSeekSeconds, closeTo(80, 0.01));
+    expect(find.byKey(const Key('recording_waveform')), findsOneWidget);
+    expect(find.byKey(const Key('previous_sound_event')), findsNothing);
+    expect(find.byKey(const Key('next_sound_event')), findsNothing);
+    expect(find.text('1 snurkmoment'), findsOneWidget);
+    expect(find.text('1 praatmoment'), findsOneWidget);
   });
 
 
@@ -275,6 +176,36 @@ void main() {
     expect(find.byKey(const Key('stop_recording')), findsOneWidget);
     expect(find.text('Opname voor vannacht'), findsOneWidget);
   });
+  testWidgets('keeps the completed recording time after stopping', (
+    tester,
+  ) async {
+    final recorder = _FakeRecorder()
+      ..stopDraft = RecordingDraft(
+        audioPath: '/tmp/stopped-night.wav',
+        startedAt: DateTime.parse('2026-08-07T22:30:00Z'),
+        durationSeconds: 125,
+        soundEvents: const [],
+      );
+    final viewModel = _createViewModel(const [], recorder: recorder);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: RecordingsScreen(viewModel: viewModel),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('start_recording')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('stop_recording')));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('recording_timer'))).data,
+      '02:05',
+    );
+  });
   testWidgets('exposes the settings action', (tester) async {
     var opened = false;
     final viewModel = _createViewModel(const []);
@@ -292,6 +223,39 @@ void main() {
 
     await tester.tap(find.byKey(const Key('open_settings')));
     expect(opened, isTrue);
+  });
+  testWidgets('shows an orange settings indicator for available updates', (
+    tester,
+  ) async {
+    final updateController = UpdateController(
+      currentVersion: '0.2.9',
+      service: _FakeUpdateService(
+        const AppRelease(
+          tagName: 'v0.3.0',
+          version: AppVersion(0, 3, 0),
+          releaseUrl: Uri.parse(
+            'https://github.com/bryanschoot/Snorer/releases/tag/v0.3.0',
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: RecordingsScreen(
+          viewModel: _createViewModel(const []),
+          updateController: updateController,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await updateController.checkForUpdate();
+    await tester.pump();
+
+    expect(find.byKey(const Key('settings_update_indicator')), findsOneWidget);
+    expect(find.byKey(const Key('open_update_release')), findsNothing);
   });
   testWidgets('keeps privacy details out of the recordings overview', (
     tester,
@@ -339,10 +303,11 @@ void main() {
 RecordingsViewModel _createViewModel(
   List<StoredRecording> recordings, {
   AudioPlaybackService? player,
+  AudioRecordingService? recorder,
 }) {
   return RecordingsViewModel(
     repository: _FakeRepository(recordings),
-    recorder: _FakeRecorder(),
+    recorder: recorder ?? _FakeRecorder(),
     player: player ?? _FakePlayer(),
   );
 }
@@ -383,6 +348,7 @@ class _FakeRepository implements RecordingRepository {
 }
 
 class _FakeRecorder implements AudioRecordingService {
+  RecordingDraft? stopDraft;
   final StreamController<AudioRecordingState> _states =
       StreamController.broadcast();
   AudioRecordingState _state = const AudioRecordingState(
@@ -410,7 +376,15 @@ class _FakeRecorder implements AudioRecordingService {
   }
 
   @override
-  Future<RecordingDraft?> stop() async => null;
+  Future<RecordingDraft?> stop() async {
+    final draft = stopDraft;
+    _state = const AudioRecordingState(
+      permissionGranted: true,
+      status: AudioRecordingStatus.idle,
+    );
+    _states.add(_state);
+    return draft;
+  }
 
   @override
   Future<void> dispose() => _states.close();
@@ -453,4 +427,19 @@ class _FakePlayer implements AudioPlaybackService {
 
   @override
   Future<void> dispose() => _states.close();
+}
+class _FakeUpdateService implements AppUpdateService {
+  const _FakeUpdateService(this.release);
+
+  final AppRelease? release;
+
+  @override
+  Future<AppRelease?> checkForUpdate(String currentVersion) async => release;
+
+  @override
+  Future<ApkInstallResult> install(AppRelease release) async =>
+      ApkInstallResult.started;
+
+  @override
+  void dispose() {}
 }
