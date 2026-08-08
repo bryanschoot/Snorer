@@ -98,6 +98,7 @@ class UpdateCard extends StatelessWidget {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
+                    children: [
                       if (release != null &&
                           release.canInstall &&
                           status != UpdateCheckStatus.installStarted)

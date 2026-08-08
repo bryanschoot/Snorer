@@ -224,7 +224,7 @@ class GitHubAppUpdateService implements AppUpdateService {
     );
     if (await apkFile.exists()) await apkFile.delete();
 
-    final digestSink = AccumulatorSink<Digest>();
+    final digestSink = _DigestSink();
     final digestInput = sha256.startChunkedConversion(digestSink);
     final output = apkFile.openWrite();
     var outputClosed = false;
@@ -242,7 +242,7 @@ class GitHubAppUpdateService implements AppUpdateService {
       throw AppUpdateException('APK download failed: $error');
     }
 
-    final actualChecksum = digestSink.events.single.toString().toLowerCase();
+    final actualChecksum = digestSink.digest?.toString().toLowerCase();
     if (actualChecksum != expectedChecksum) {
       if (await apkFile.exists()) await apkFile.delete();
       throw const AppUpdateException(
@@ -257,6 +257,15 @@ class GitHubAppUpdateService implements AppUpdateService {
 
   @override
   void dispose() => _client.close();
+}
+class _DigestSink implements Sink<Digest> {
+  Digest? digest;
+
+  @override
+  void add(Digest value) => digest = value;
+
+  @override
+  void close() {}
 }
 
 enum ApkInstallResult {
