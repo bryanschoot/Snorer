@@ -38,13 +38,15 @@ class SnorerApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         theme: buildSnorerTheme(themeController.mode),
-        home: RecordingsScreen(
-          viewModel: viewModel,
-          onOpenSettings: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => SettingsScreen(
-                themeController: themeController,
-                languageController: languageController,
+        home: Builder(
+          builder: (context) => RecordingsScreen(
+            viewModel: viewModel,
+            onOpenSettings: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SettingsScreen(
+                  themeController: themeController,
+                  languageController: languageController,
+                ),
               ),
             ),
           ),

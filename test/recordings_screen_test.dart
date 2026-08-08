@@ -2,13 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:snorer/app.dart';
+import 'package:snorer/core/localization/snorer_language.dart';
 import 'package:snorer/core/theme/app_theme.dart';
 import 'package:snorer/data/repositories/recording_repository.dart';
 import 'package:snorer/data/services/audio_playback_service.dart';
 import 'package:snorer/data/services/audio_recording_service.dart';
+import 'package:snorer/data/services/language_preferences.dart';
+import 'package:snorer/data/services/theme_preferences.dart';
 import 'package:snorer/domain/models/recording.dart';
 import 'package:snorer/presentation/recordings/recordings_screen.dart';
 import 'package:snorer/presentation/recordings/recordings_view_model.dart';
+import 'package:snorer/presentation/settings/language_controller.dart';
+import 'package:snorer/presentation/settings/settings_screen.dart';
+import 'package:snorer/presentation/settings/theme_controller.dart';
 
 void main() {
   testWidgets('shows a local recording and changes its manual label', (
@@ -172,6 +179,34 @@ void main() {
     await tester.tap(find.byKey(const Key('open_settings')));
     expect(opened, isTrue);
   });
+  testWidgets('opens settings and renders Material icons from the full app', (
+    tester,
+  ) async {
+    final themeController = ThemeController(
+      preferences: _MemoryThemePreferences(),
+    );
+    final languageController = LanguageController(
+      preferences: _MemoryLanguagePreferences(),
+    );
+    await themeController.initialize();
+    await languageController.initialize();
+
+    await tester.pumpWidget(
+      SnorerApp(
+        viewModel: _createViewModel(const []),
+        themeController: themeController,
+        languageController: languageController,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+    await tester.tap(find.byKey(const Key('open_settings')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsScreen), findsOneWidget);
+    expect(find.byIcon(Icons.palette_outlined), findsOneWidget);
+  });
 }
 
 RecordingsViewModel _createViewModel(
@@ -183,6 +218,22 @@ RecordingsViewModel _createViewModel(
     recorder: _FakeRecorder(),
     player: player ?? _FakePlayer(),
   );
+}
+
+class _MemoryThemePreferences implements ThemePreferences {
+  @override
+  Future<SnorerThemeMode> load() async => SnorerThemeMode.dark;
+
+  @override
+  Future<void> save(SnorerThemeMode mode) async {}
+}
+
+class _MemoryLanguagePreferences implements LanguagePreferences {
+  @override
+  Future<SnorerLanguage> load() async => SnorerLanguage.dutch;
+
+  @override
+  Future<void> save(SnorerLanguage language) async {}
 }
 
 class _FakeRepository implements RecordingRepository {
