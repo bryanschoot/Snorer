@@ -230,7 +230,7 @@ void main() {
     final updateController = UpdateController(
       currentVersion: '0.2.9',
       service: _FakeUpdateService(
-        const AppRelease(
+        AppRelease(
           tagName: 'v0.3.0',
           version: AppVersion(0, 3, 0),
           releaseUrl: Uri.parse(
