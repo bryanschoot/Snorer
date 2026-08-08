@@ -46,6 +46,11 @@ void main() {
     );
     expect(find.text('Lokale opnames'), findsOneWidget);
     expect(find.text('1 nacht'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('3m 05s'),
+      300,
+      scrollable: scrollable,
+    );
     expect(find.text('3m 05s'), findsOneWidget);
 
     await tester.scrollUntilVisible(

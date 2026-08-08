@@ -16,7 +16,7 @@ void main() {
     final client = MockClient((request) async {
       expect(request.headers['Accept'], 'application/vnd.github+json');
       expect(request.headers['X-GitHub-Api-Version'], '2022-11-28');
-      expect(request.headers['User-Agent'], 'Snorer/0.2.4');
+      expect(request.headers['User-Agent'], 'Snorer/0.2.4+6');
       return http.Response(
         jsonEncode({
           'tag_name': 'v0.2.5',
