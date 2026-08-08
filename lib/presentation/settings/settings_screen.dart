@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../core/localization/snorer_language.dart';
 import '../../core/localization/snorer_localizations.dart';
 import '../../core/theme/app_theme.dart';
+import '../update/update_card.dart';
+import '../update/update_controller.dart';
 import 'language_controller.dart';
 import 'theme_controller.dart';
 
@@ -13,10 +15,13 @@ class SettingsScreen extends StatelessWidget {
     super.key,
     required this.themeController,
     required this.languageController,
+    this.updateController,
   });
 
   final ThemeController themeController;
   final LanguageController languageController;
+  final UpdateController? updateController;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
@@ -148,6 +153,16 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
+            if (updateController != null) ...[
+              const SizedBox(height: 26),
+              _SettingsSectionTitle(
+                icon: Icons.system_update_alt_rounded,
+                title: strings.updateCheckTitle,
+                colors: colors,
+              ),
+              const SizedBox(height: 10),
+              UpdateCard(controller: updateController!),
+            ],
             const SizedBox(height: 26),
             _SettingsSectionTitle(
               icon: Icons.shield_outlined,

@@ -29,8 +29,6 @@
   "detectionLoading": "Preparing sound model…",
   "detectionUnavailable": "Recording works, but sound labels are unavailable.",
   "detectionIdle": "Sound labels are processed on this device only.",
-  "privacyTitle": "Private and local",
-  "privacyBody": "Audio and sound labels stay on your phone. Snorer uses no account, ads, or cloud analysis.",
   "overviewEyebrow": "OVERVIEW",
   "localRecordings": "Local recordings",
   "recordingsCount": "{count, plural, =1{1 night} other{{count} nights}}",
@@ -122,5 +120,24 @@
         "type": "String"
       }
     }
-  }
+  },
+  "updateCheckTitle": "Check for updates",
+  "updateCheckBody": "Snorer checks GitHub for a newer release.",
+  "updateChecking": "Checking for updates…",
+  "updateCheckingBody": "Looking for a newer Snorer release.",
+  "updateUpToDate": "Snorer is up to date",
+  "updateUpToDateBody": "You are using the latest available release.",
+  "updateCheckFailed": "Update check unavailable",
+  "updateCheckFailedBody": "Try again when you have an internet connection.",
+  "updateAvailableTitle": "New version available",
+  "updateAvailableBody": "Snorer {version} is available. Open GitHub to view the release.",
+  "@updateAvailableBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateOpen": "View release",
+  "updateOpenFailed": "Could not open the GitHub release."
 }

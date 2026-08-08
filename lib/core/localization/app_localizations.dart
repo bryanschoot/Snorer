@@ -272,18 +272,6 @@ abstract class AppLocalizations {
   /// **'Sound labels are processed on this device only.'**
   String get detectionIdle;
 
-  /// No description provided for @privacyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Private and local'**
-  String get privacyTitle;
-
-  /// No description provided for @privacyBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Audio and sound labels stay on your phone. Snorer uses no account, ads, or cloud analysis.'**
-  String get privacyBody;
-
   /// No description provided for @overviewEyebrow.
   ///
   /// In en, this message translates to:
@@ -625,6 +613,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{message}: {detail}'**
   String errorWithDetail(String message, String detail);
+
+  /// No description provided for @updateCheckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get updateCheckTitle;
+
+  /// No description provided for @updateCheckBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Snorer checks GitHub for a newer release.'**
+  String get updateCheckBody;
+
+  /// No description provided for @updateChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates…'**
+  String get updateChecking;
+
+  /// No description provided for @updateCheckingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for a newer Snorer release.'**
+  String get updateCheckingBody;
+
+  /// No description provided for @updateUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Snorer is up to date'**
+  String get updateUpToDate;
+
+  /// No description provided for @updateUpToDateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You are using the latest available release.'**
+  String get updateUpToDateBody;
+
+  /// No description provided for @updateCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Update check unavailable'**
+  String get updateCheckFailed;
+
+  /// No description provided for @updateCheckFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again when you have an internet connection.'**
+  String get updateCheckFailedBody;
+
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New version available'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateAvailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Snorer {version} is available. Open GitHub to view the release.'**
+  String updateAvailableBody(String version);
+
+  /// No description provided for @updateOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'View release'**
+  String get updateOpen;
+
+  /// No description provided for @updateOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the GitHub release.'**
+  String get updateOpenFailed;
 }
 
 class _AppLocalizationsDelegate

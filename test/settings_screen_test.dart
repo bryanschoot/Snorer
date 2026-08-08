@@ -6,9 +6,11 @@ import 'package:snorer/core/localization/snorer_language.dart';
 import 'package:snorer/core/localization/snorer_localizations.dart';
 import 'package:snorer/core/theme/app_theme.dart';
 import 'package:snorer/data/services/language_preferences.dart';
+import 'package:snorer/data/services/app_update_service.dart';
 import 'package:snorer/data/services/theme_preferences.dart';
 import 'package:snorer/presentation/settings/language_controller.dart';
 import 'package:snorer/presentation/settings/settings_screen.dart';
+import 'package:snorer/presentation/update/update_controller.dart';
 import 'package:snorer/presentation/settings/theme_controller.dart';
 
 void main() {
@@ -121,6 +123,55 @@ void main() {
     await secondSave;
     expect(controller.mode, SnorerThemeMode.pink);
   });
+  testWidgets('checks for updates from settings', (tester) async {
+    final service = _FakeUpdateService(
+      AppRelease(
+        tagName: 'v0.2.5',
+        version: const AppVersion(0, 2, 5),
+        releaseUrl: Uri.parse('https://github.com/bryanschoot/Snorer/releases'),
+      ),
+    );
+    final updateController = UpdateController(
+      currentVersion: '0.2.4',
+      service: service,
+    );
+    final themeController = ThemeController(
+      preferences: _MemoryThemePreferences(),
+    );
+    final languageController = LanguageController(
+      preferences: _MemoryLanguagePreferences(),
+    );
+    await themeController.initialize();
+    await languageController.initialize();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: SettingsScreen(
+          themeController: themeController,
+          languageController: languageController,
+          updateController: updateController,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final scrollable = find.byType(Scrollable);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('check_for_updates')),
+      500,
+      scrollable: scrollable,
+    );
+    await tester.tap(find.byKey(const Key('check_for_updates')));
+    await tester.pumpAndSettle();
+
+    expect(service.checks, 1);
+    expect(
+      updateController.status,
+      UpdateCheckStatus.updateAvailable,
+    );
+    expect(find.byKey(const Key('open_update_release')), findsOneWidget);
+  });
 }
 
 class _MemoryThemePreferences implements ThemePreferences {
@@ -170,4 +221,20 @@ class _MemoryLanguagePreferences implements LanguagePreferences {
     _language = language;
     savedLanguage = language;
   }
+}
+
+class _FakeUpdateService implements AppUpdateService {
+  _FakeUpdateService(this.release);
+
+  final AppRelease? release;
+  int checks = 0;
+
+  @override
+  Future<AppRelease?> checkForUpdate(String currentVersion) async {
+    checks += 1;
+    return release;
+  }
+
+  @override
+  void dispose() {}
 }

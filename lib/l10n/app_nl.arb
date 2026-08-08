@@ -29,8 +29,6 @@
   "detectionLoading": "Geluidsmodel wordt klaargemaakt…",
   "detectionUnavailable": "Opname werkt, maar geluidslabels zijn niet beschikbaar.",
   "detectionIdle": "Geluidslabels worden alleen op dit apparaat verwerkt.",
-  "privacyTitle": "Privé en lokaal",
-  "privacyBody": "Audio en geluidslabels blijven op je telefoon. Snorer gebruikt geen account, advertenties of cloudanalyse.",
   "overviewEyebrow": "OVERZICHT",
   "localRecordings": "Lokale opnames",
   "recordingsCount": "{count, plural, =1{1 nacht} other{{count} nachten}}",
@@ -122,5 +120,24 @@
         "type": "String"
       }
     }
-  }
+  },
+  "updateCheckTitle": "Controleren op updates",
+  "updateCheckBody": "Snorer kijkt op GitHub of er een nieuwere release is.",
+  "updateChecking": "Updates controleren…",
+  "updateCheckingBody": "Snorer zoekt naar een nieuwere release.",
+  "updateUpToDate": "Snorer is bijgewerkt",
+  "updateUpToDateBody": "Je gebruikt de nieuwste beschikbare release.",
+  "updateCheckFailed": "Updatecontrole niet beschikbaar",
+  "updateCheckFailedBody": "Probeer het opnieuw met een internetverbinding.",
+  "updateAvailableTitle": "Nieuwe versie beschikbaar",
+  "updateAvailableBody": "Snorer {version} is beschikbaar. Open GitHub om de release te bekijken.",
+  "@updateAvailableBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateOpen": "Release bekijken",
+  "updateOpenFailed": "De GitHub-release kon niet worden geopend."
 }

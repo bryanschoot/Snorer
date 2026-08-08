@@ -179,6 +179,19 @@ void main() {
     await tester.tap(find.byKey(const Key('open_settings')));
     expect(opened, isTrue);
   });
+  testWidgets('keeps privacy details out of the recordings overview', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: RecordingsScreen(viewModel: _createViewModel(const [])),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Privé en lokaal'), findsNothing);
+  });
   testWidgets('opens settings and renders Material icons from the full app', (
     tester,
   ) async {

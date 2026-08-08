@@ -10,17 +10,20 @@ import '../../data/services/audio_recording_service.dart';
 import '../../domain/models/recording.dart';
 import '../../domain/services/recording_utils.dart';
 import 'recordings_view_model.dart';
+import '../update/update_card.dart';
+import '../update/update_controller.dart';
 
 class RecordingsScreen extends StatefulWidget {
   const RecordingsScreen({
     super.key,
     required this.viewModel,
     this.onOpenSettings,
+    this.updateController,
   });
 
   final RecordingsViewModel viewModel;
   final VoidCallback? onOpenSettings;
-
+  final UpdateController? updateController;
   @override
   State<RecordingsScreen> createState() => _RecordingsScreenState();
 }
@@ -62,6 +65,12 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                   ),
                   children: [
                     _AppHeader(onOpenSettings: widget.onOpenSettings),
+                    if (widget.updateController != null)
+                      UpdateCard(
+                        controller: widget.updateController!,
+                        onlyWhenAvailable: true,
+                        showCheckButton: false,
+                      ),
                     if (viewModel.recorderState.permissionGranted == false) ...[
                       const SizedBox(height: 16),
                       _PermissionBanner(),
@@ -72,8 +81,6 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                       onStart: viewModel.startRecording,
                       onStop: viewModel.stopRecording,
                     ),
-                    const SizedBox(height: 14),
-                    _PrivacyCard(),
                     const SizedBox(height: 28),
                     _SectionHeader(count: viewModel.recordings.length),
                     const SizedBox(height: 12),
@@ -555,58 +562,6 @@ class _RecorderCard extends StatelessWidget {
   }
 }
 
-class _PrivacyCard extends StatelessWidget {
-  const _PrivacyCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.snorerColors;
-    final strings = SnorerLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceSoft,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: colors.primary,
-            foregroundColor: colors.onPrimary,
-            child: const Icon(Icons.lock_outline_rounded, size: 16),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  strings.privacyTitle,
-                  style: TextStyle(
-                    color: colors.text,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  strings.privacyBody,
-                  style: TextStyle(
-                    color: colors.muted,
-                    fontSize: 13,
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.count});

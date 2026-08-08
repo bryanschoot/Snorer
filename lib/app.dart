@@ -9,6 +9,7 @@ import 'presentation/recordings/recordings_view_model.dart';
 import 'presentation/settings/language_controller.dart';
 import 'presentation/settings/settings_screen.dart';
 import 'presentation/settings/theme_controller.dart';
+import 'presentation/update/update_controller.dart';
 
 class SnorerApp extends StatelessWidget {
   const SnorerApp({
@@ -16,11 +17,13 @@ class SnorerApp extends StatelessWidget {
     required this.viewModel,
     required this.themeController,
     required this.languageController,
+    this.updateController,
   });
 
   final RecordingsViewModel viewModel;
   final ThemeController themeController;
   final LanguageController languageController;
+  final UpdateController? updateController;
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +44,13 @@ class SnorerApp extends StatelessWidget {
         home: Builder(
           builder: (context) => RecordingsScreen(
             viewModel: viewModel,
+            updateController: updateController,
             onOpenSettings: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => SettingsScreen(
                   themeController: themeController,
                   languageController: languageController,
+                  updateController: updateController,
                 ),
               ),
             ),

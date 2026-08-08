@@ -102,13 +102,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detectionIdle => 'Sound labels are processed on this device only.';
 
   @override
-  String get privacyTitle => 'Private and local';
-
-  @override
-  String get privacyBody =>
-      'Audio and sound labels stay on your phone. Snorer uses no account, ads, or cloud analysis.';
-
-  @override
   String get overviewEyebrow => 'OVERVIEW';
 
   @override
@@ -315,4 +308,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String errorWithDetail(String message, String detail) {
     return '$message: $detail';
   }
+
+  @override
+  String get updateCheckTitle => 'Check for updates';
+
+  @override
+  String get updateCheckBody => 'Snorer checks GitHub for a newer release.';
+
+  @override
+  String get updateChecking => 'Checking for updates…';
+
+  @override
+  String get updateCheckingBody => 'Looking for a newer Snorer release.';
+
+  @override
+  String get updateUpToDate => 'Snorer is up to date';
+
+  @override
+  String get updateUpToDateBody =>
+      'You are using the latest available release.';
+
+  @override
+  String get updateCheckFailed => 'Update check unavailable';
+
+  @override
+  String get updateCheckFailedBody =>
+      'Try again when you have an internet connection.';
+
+  @override
+  String get updateAvailableTitle => 'New version available';
+
+  @override
+  String updateAvailableBody(String version) {
+    return 'Snorer $version is available. Open GitHub to view the release.';
+  }
+
+  @override
+  String get updateOpen => 'View release';
+
+  @override
+  String get updateOpenFailed => 'Could not open the GitHub release.';
 }

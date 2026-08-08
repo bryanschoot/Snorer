@@ -103,13 +103,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geluidslabels worden alleen op dit apparaat verwerkt.';
 
   @override
-  String get privacyTitle => 'Privé en lokaal';
-
-  @override
-  String get privacyBody =>
-      'Audio en geluidslabels blijven op je telefoon. Snorer gebruikt geen account, advertenties of cloudanalyse.';
-
-  @override
   String get overviewEyebrow => 'OVERZICHT';
 
   @override
@@ -318,4 +311,46 @@ class AppLocalizationsNl extends AppLocalizations {
   String errorWithDetail(String message, String detail) {
     return '$message: $detail';
   }
+
+  @override
+  String get updateCheckTitle => 'Controleren op updates';
+
+  @override
+  String get updateCheckBody =>
+      'Snorer kijkt op GitHub of er een nieuwere release is.';
+
+  @override
+  String get updateChecking => 'Updates controleren…';
+
+  @override
+  String get updateCheckingBody =>
+      'Snorer zoekt naar een nieuwere release.';
+
+  @override
+  String get updateUpToDate => 'Snorer is bijgewerkt';
+
+  @override
+  String get updateUpToDateBody =>
+      'Je gebruikt de nieuwste beschikbare release.';
+
+  @override
+  String get updateCheckFailed => 'Updatecontrole niet beschikbaar';
+
+  @override
+  String get updateCheckFailedBody =>
+      'Probeer het opnieuw met een internetverbinding.';
+
+  @override
+  String get updateAvailableTitle => 'Nieuwe versie beschikbaar';
+
+  @override
+  String updateAvailableBody(String version) {
+    return 'Snorer $version is beschikbaar. Open GitHub om de release te bekijken.';
+  }
+
+  @override
+  String get updateOpen => 'Release bekijken';
+
+  @override
+  String get updateOpenFailed => 'De GitHub-release kon niet worden geopend.';
 }
