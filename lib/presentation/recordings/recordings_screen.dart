@@ -1039,6 +1039,7 @@ class _WaveformPainter extends CustomPainter {
       final barWidth = (slotWidth * 0.6).clamp(2.0, 8.0).toDouble();
       final start = index / waveform.length * durationSeconds;
       final end = (index + 1) / waveform.length * durationSeconds;
+      final eventColor = _eventColor(start, end);
       final played = (index + 0.5) / waveform.length <= progress;
       final color = eventColor ??
           (played ? colors.primary : colors.waveInactive).withValues(
