@@ -84,9 +84,7 @@ void main() {
     );
     expect(listTop.dy, greaterThanOrEqualTo(24));
   });
-  testWidgets('shows waveform duration without playback controls', (
-    tester,
-  ) async {
+  testWidgets('controls playback from the waveform', (tester) async {
     final recording = StoredRecording(
       id: 'night-1',
       audioPath: '/tmp/night-1.wav',
@@ -95,7 +93,8 @@ void main() {
       soundEvents: const [],
       label: null,
     );
-    final viewModel = _createViewModel([recording]);
+    final player = _FakePlayer();
+    final viewModel = _createViewModel([recording], player: player);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -113,9 +112,18 @@ void main() {
     );
 
     expect(find.byKey(const Key('recording_waveform')), findsOneWidget);
-    expect(find.byKey(const Key('toggle_playback')), findsNothing);
+    expect(find.byKey(const Key('toggle_playback')), findsOneWidget);
     expect(find.byType(Slider), findsNothing);
-    expect(find.byKey(const Key('recording_playhead')), findsNothing);
+    expect(find.byKey(const Key('recording_playhead')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('toggle_playback')));
+    expect(player.toggleCalls, 1);
+
+    final waveformCenter = tester.getCenter(
+      find.byKey(const Key('recording_waveform')),
+    );
+    await tester.tapAt(waveformCenter);
+    expect(player.lastSeekSeconds, closeTo(92.5, 0.1));
     expect(
       tester.widget<Text>(find.byKey(const Key('waveform_start_time'))).data,
       '00:00',
@@ -413,6 +421,7 @@ class _FakePlayer implements AudioPlaybackService {
   final StreamController<AudioPlaybackState> _states =
       StreamController.broadcast();
   AudioPlaybackState _state = const AudioPlaybackState();
+  int toggleCalls = 0;
   double? lastSeekSeconds;
 
   @override
@@ -435,7 +444,7 @@ class _FakePlayer implements AudioPlaybackService {
   }
 
   @override
-  Future<void> toggle() async {}
+  Future<void> toggle() async => toggleCalls += 1;
   @override
   Future<void> seekTo(double seconds) async {
     lastSeekSeconds = seconds;

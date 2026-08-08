@@ -6,6 +6,7 @@ import '../../core/errors/snorer_error.dart';
 import '../../core/localization/snorer_localizations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/services/audio_recording_service.dart';
+import '../../data/services/audio_playback_service.dart';
 import '../../domain/models/recording.dart';
 import '../../domain/services/recording_utils.dart';
 import 'recordings_view_model.dart';
@@ -48,86 +49,90 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
     return Scaffold(
       body: SafeArea(
         child: ListenableBuilder(
-      listenable: Listenable.merge(listenables),
-      builder: (context, _) {
-        final viewModel = widget.viewModel;
-        final strings = SnorerLocalizations.of(context);
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth >= 720
-                ? 32.0
-                : 20.0;
-            return ListView(
-              key: const Key('recordings_scroll_view'),
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                16,
-                horizontalPadding,
-                40,
-              ),
-              children: [
-                _AppHeader(
-                  onOpenSettings: widget.onOpenSettings,
-                  hasUpdate:
-                      widget.updateController?.availableRelease != null,
-                ),
-                if (viewModel.recorderState.permissionGranted == false) ...[
-                  const SizedBox(height: 16),
-                  _PermissionBanner(),
-                ],
-                const SizedBox(height: 18),
-                _RecorderCard(
-                  state: viewModel.recorderState,
-                  durationSeconds: viewModel.displayedDurationSeconds,
-                  onStart: viewModel.startRecording,
-                  onStop: viewModel.stopRecording,
-                ),
-                const SizedBox(height: 28),
-                _SectionHeader(count: viewModel.recordings.length),
-                const SizedBox(height: 12),
-                if (!viewModel.isHydrated)
-                  const _LoadingCard()
-                else if (viewModel.selectedRecording == null)
-                  const _EmptyRecordingState()
-                else
-                  _RecordingWaveformCard(
-                    recording: viewModel.selectedRecording!,
-                    waveform: viewModel.playerState.waveform,
+          listenable: Listenable.merge(listenables),
+          builder: (context, _) {
+            final viewModel = widget.viewModel;
+            final strings = SnorerLocalizations.of(context);
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontalPadding = constraints.maxWidth >= 720
+                    ? 32.0
+                    : 20.0;
+                return ListView(
+                  key: const Key('recordings_scroll_view'),
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    16,
+                    horizontalPadding,
+                    40,
                   ),
-                if (viewModel.recordings.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _RecordingList(
-                    recordings: viewModel.recordings,
-                    selectedId: viewModel.selectedRecording?.id,
-                    onSelect: viewModel.selectRecording,
-                    onToggleLabel: viewModel.toggleLabel,
-                    onDelete: (id) => _confirmDelete(context, viewModel, id),
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      key: const Key('delete_all_recordings'),
-                      onPressed: () => _confirmDeleteAll(context, viewModel),
-                      icon: const Icon(Icons.delete_sweep_outlined),
-                      label: Text(strings.deleteAllRecordings),
-                      style: TextButton.styleFrom(
-                        foregroundColor: context.snorerColors.danger,
-                      ),
+                  children: [
+                    _AppHeader(
+                      onOpenSettings: widget.onOpenSettings,
+                      hasUpdate:
+                          widget.updateController?.availableRelease != null,
                     ),
-                  ),
-                ],
-                if (viewModel.error != null) ...[
-                  const SizedBox(height: 12),
-                  _ErrorCard(error: viewModel.error!),
-                ],
-                const SizedBox(height: 24),
-                _AppFooter(),
-              ],
+                    if (viewModel.recorderState.permissionGranted == false) ...[
+                      const SizedBox(height: 16),
+                      _PermissionBanner(),
+                    ],
+                    const SizedBox(height: 18),
+                    _RecorderCard(
+                      state: viewModel.recorderState,
+                      durationSeconds: viewModel.displayedDurationSeconds,
+                      onStart: viewModel.startRecording,
+                      onStop: viewModel.stopRecording,
+                    ),
+                    const SizedBox(height: 28),
+                    _SectionHeader(count: viewModel.recordings.length),
+                    const SizedBox(height: 12),
+                    if (!viewModel.isHydrated)
+                      const _LoadingCard()
+                    else if (viewModel.selectedRecording == null)
+                      const _EmptyRecordingState()
+                    else
+                      _RecordingWaveformCard(
+                        recording: viewModel.selectedRecording!,
+                        playback: viewModel.playerState,
+                        onTogglePlayback: viewModel.togglePlayback,
+                        onSeek: viewModel.seekTo,
+                      ),
+                    if (viewModel.recordings.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _RecordingList(
+                        recordings: viewModel.recordings,
+                        selectedId: viewModel.selectedRecording?.id,
+                        onSelect: viewModel.selectRecording,
+                        onToggleLabel: viewModel.toggleLabel,
+                        onDelete: (id) =>
+                            _confirmDelete(context, viewModel, id),
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          key: const Key('delete_all_recordings'),
+                          onPressed: () =>
+                              _confirmDeleteAll(context, viewModel),
+                          icon: const Icon(Icons.delete_sweep_outlined),
+                          label: Text(strings.deleteAllRecordings),
+                          style: TextButton.styleFrom(
+                            foregroundColor: context.snorerColors.danger,
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (viewModel.error != null) ...[
+                      const SizedBox(height: 12),
+                      _ErrorCard(error: viewModel.error!),
+                    ],
+                    const SizedBox(height: 24),
+                    _AppFooter(),
+                  ],
+                );
+              },
             );
           },
-        );
-      },
         ),
       ),
     );
@@ -684,11 +689,15 @@ class _EmptyRecordingState extends StatelessWidget {
 class _RecordingWaveformCard extends StatelessWidget {
   const _RecordingWaveformCard({
     required this.recording,
-    required this.waveform,
+    required this.playback,
+    required this.onTogglePlayback,
+    required this.onSeek,
   });
 
   final StoredRecording recording;
-  final List<double> waveform;
+  final AudioPlaybackState playback;
+  final Future<void> Function() onTogglePlayback;
+  final Future<void> Function(double seconds) onSeek;
 
   static const _placeholderWaveform = <double>[
     0.22,
@@ -721,12 +730,19 @@ class _RecordingWaveformCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
     final strings = SnorerLocalizations.of(context);
-    final timelineDuration = recording.durationSeconds > 0
+    final timelineDuration = playback.durationSeconds > 0
+        ? playback.durationSeconds
+        : recording.durationSeconds > 0
         ? recording.durationSeconds
         : 1.0;
-    final displayedWaveform = waveform.isNotEmpty
-        ? waveform
+    final timelineProgress =
+        (playback.currentSeconds / timelineDuration).clamp(0, 1).toDouble();
+    final displayedWaveform = playback.waveform.isNotEmpty
+        ? playback.waveform
         : _placeholderWaveform;
+    final displayedDuration = playback.durationSeconds > 0
+        ? playback.durationSeconds
+        : recording.durationSeconds;
     final snoringCount = recording.soundEvents
         .where((event) => event.kind == SoundEventKind.snoring)
         .length;
@@ -775,25 +791,39 @@ class _RecordingWaveformCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                IconButton.filled(
+                  key: const Key('toggle_playback'),
+                  onPressed: () => unawaited(onTogglePlayback()),
+                  tooltip: playback.isPlaying
+                      ? strings.pauseRecording
+                      : strings.playRecording,
+                  icon: Icon(
+                    playback.isPlaying
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 18),
             _WaveformTimeline(
               waveform: displayedWaveform,
+              progress: timelineProgress,
               durationSeconds: timelineDuration,
               events: recording.soundEvents,
+              onSeek: onSeek,
             ),
             const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  formatClock(0),
+                  formatClock(playback.currentSeconds),
                   key: const Key('waveform_start_time'),
                   style: TextStyle(color: colors.muted, fontSize: 12),
                 ),
                 Text(
-                  formatClock(recording.durationSeconds),
+                  formatClock(displayedDuration),
                   key: const Key('waveform_end_time'),
                   style: TextStyle(color: colors.muted, fontSize: 12),
                 ),
@@ -836,31 +866,143 @@ class _RecordingWaveformCard extends StatelessWidget {
 }
 
 
-class _WaveformTimeline extends StatelessWidget {
+class _WaveformTimeline extends StatefulWidget {
   const _WaveformTimeline({
     required this.waveform,
+    required this.progress,
     required this.durationSeconds,
     required this.events,
+    required this.onSeek,
   });
 
   final List<double> waveform;
+  final double progress;
   final double durationSeconds;
   final List<SoundEvent> events;
+  final Future<void> Function(double seconds) onSeek;
+
+  @override
+  State<_WaveformTimeline> createState() => _WaveformTimelineState();
+}
+
+class _WaveformTimelineState extends State<_WaveformTimeline> {
+  Timer? _seekTimer;
+  Timer? _clearDragTimer;
+  double? _dragProgress;
+
+  double get _visibleProgress =>
+      (_dragProgress ?? widget.progress).clamp(0, 1).toDouble();
+
+  @override
+  void dispose() {
+    _seekTimer?.cancel();
+    _clearDragTimer?.cancel();
+    super.dispose();
+  }
+
+  double _progressFor(double dx, double width) {
+    if (width <= 0) return 0;
+    return (dx / width).clamp(0, 1).toDouble();
+  }
+
+  void _setDragProgress(double progress, {required bool immediate}) {
+    _clearDragTimer?.cancel();
+    if (mounted) setState(() => _dragProgress = progress);
+    _seekTimer?.cancel();
+    if (immediate) {
+      unawaited(widget.onSeek(progress * widget.durationSeconds));
+      return;
+    }
+    _seekTimer = Timer(const Duration(milliseconds: 40), () {
+      unawaited(widget.onSeek(progress * widget.durationSeconds));
+    });
+  }
+
+  void _handleTap(double dx, double width) {
+    final progress = _progressFor(dx, width);
+    _setDragProgress(progress, immediate: true);
+    _clearDragTimer = Timer(const Duration(milliseconds: 220), () {
+      if (mounted) setState(() => _dragProgress = null);
+    });
+  }
+
+  void _finishDrag() {
+    final progress = _dragProgress;
+    if (progress != null) {
+      _seekTimer?.cancel();
+      unawaited(widget.onSeek(progress * widget.durationSeconds));
+    }
+    if (mounted) setState(() => _dragProgress = null);
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.snorerColors;
-    return SizedBox(
-      key: const Key('recording_waveform'),
-      height: 112,
-      child: CustomPaint(
-        painter: _WaveformPainter(
-          waveform: waveform,
-          durationSeconds: durationSeconds,
-          events: events,
-          colors: colors,
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final progress = _visibleProgress;
+        final playheadLeft = (width * progress - 1)
+            .clamp(0.0, width > 2 ? width - 2 : 0.0)
+            .toDouble();
+        return GestureDetector(
+          key: const Key('recording_waveform'),
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) => _handleTap(details.localPosition.dx, width),
+          onHorizontalDragStart: (details) {
+            _setDragProgress(
+              _progressFor(details.localPosition.dx, width),
+              immediate: true,
+            );
+          },
+          onHorizontalDragUpdate: (details) {
+            _setDragProgress(
+              _progressFor(details.localPosition.dx, width),
+              immediate: false,
+            );
+          },
+          onHorizontalDragEnd: (_) => _finishDrag(),
+          onHorizontalDragCancel: _finishDrag,
+          child: SizedBox(
+            height: 112,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CustomPaint(
+                  painter: _WaveformPainter(
+                    waveform: widget.waveform,
+                    progress: progress,
+                    durationSeconds: widget.durationSeconds,
+                    events: widget.events,
+                    colors: colors,
+                  ),
+                ),
+                Positioned(
+                  key: const Key('recording_playhead'),
+                  left: playheadLeft,
+                  top: 8,
+                  bottom: 8,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: colors.primaryDark,
+                        borderRadius: BorderRadius.circular(2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.primaryDark.withValues(alpha: 0.35),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -868,12 +1010,14 @@ class _WaveformTimeline extends StatelessWidget {
 class _WaveformPainter extends CustomPainter {
   const _WaveformPainter({
     required this.waveform,
+    required this.progress,
     required this.durationSeconds,
     required this.events,
     required this.colors,
   });
 
   final List<double> waveform;
+  final double progress;
   final double durationSeconds;
   final List<SoundEvent> events;
   final SnorerThemePalette colors;
@@ -895,8 +1039,11 @@ class _WaveformPainter extends CustomPainter {
       final barWidth = (slotWidth * 0.6).clamp(2.0, 8.0).toDouble();
       final start = index / waveform.length * durationSeconds;
       final end = (index + 1) / waveform.length * durationSeconds;
-      final eventColor = _eventColor(start, end);
-      final color = eventColor ?? colors.waveInactive.withValues(alpha: 0.72);
+      final played = (index + 0.5) / waveform.length <= progress;
+      final color = eventColor ??
+          (played ? colors.primary : colors.waveInactive).withValues(
+            alpha: played ? 1 : 0.72,
+          );
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(
           left,
