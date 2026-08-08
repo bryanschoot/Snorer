@@ -159,7 +159,8 @@ void main() {
       ],
       label: null,
     );
-    final viewModel = _createViewModel([recording]);
+    final player = _FakePlayer();
+    final viewModel = _createViewModel([recording], player: player);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -177,10 +178,17 @@ void main() {
     );
 
     expect(find.byKey(const Key('recording_waveform')), findsOneWidget);
-    expect(find.byKey(const Key('previous_sound_event')), findsNothing);
-    expect(find.byKey(const Key('next_sound_event')), findsNothing);
+    expect(find.byKey(const Key('previous_sound_event')), findsOneWidget);
+    expect(find.byKey(const Key('next_sound_event')), findsOneWidget);
     expect(find.text('1 snurkmoment'), findsOneWidget);
     expect(find.text('1 praatmoment'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('event_filter_snoring')));
+    await tester.tap(find.byKey(const Key('next_sound_event')));
+    expect(player.lastSeekSeconds, 10);
+
+    await tester.tap(find.byKey(const Key('event_filter_speech')));
+    await tester.tap(find.byKey(const Key('next_sound_event')));
+    expect(player.lastSeekSeconds, 20);
   });
 
 

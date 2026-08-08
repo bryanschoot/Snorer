@@ -829,6 +829,14 @@ class _RecordingWaveformCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (recording.soundEvents.isNotEmpty) ...[
+              _SoundEventStepper(
+                events: recording.soundEvents,
+                currentSeconds: playback.currentSeconds,
+                onSeek: onSeek,
+              ),
+              const SizedBox(height: 14),
+            ],
             const SizedBox(height: 14),
             if (recording.soundEvents.isEmpty)
               Text(
@@ -865,6 +873,135 @@ class _RecordingWaveformCard extends StatelessWidget {
   }
 }
 
+
+class _SoundEventStepper extends StatefulWidget {
+  const _SoundEventStepper({
+    required this.events,
+    required this.currentSeconds,
+    required this.onSeek,
+  });
+
+  final List<SoundEvent> events;
+  final double currentSeconds;
+  final Future<void> Function(double seconds) onSeek;
+
+  @override
+  State<_SoundEventStepper> createState() => _SoundEventStepperState();
+}
+
+class _SoundEventStepperState extends State<_SoundEventStepper> {
+  SoundEventKind? _filterKind;
+
+  List<SoundEvent> get _filteredEvents {
+    final events = widget.events
+        .where(
+          (event) => _filterKind == null || event.kind == _filterKind,
+        )
+        .toList();
+    events.sort((a, b) => a.startSeconds.compareTo(b.startSeconds));
+    return events;
+  }
+
+  int _activeIndex(List<SoundEvent> events) {
+    final position = widget.currentSeconds.isFinite
+        ? widget.currentSeconds
+        : 0;
+    var activeIndex = -1;
+    for (var index = 0; index < events.length; index += 1) {
+      if (events[index].startSeconds > position + 0.05) break;
+      activeIndex = index;
+    }
+    return activeIndex;
+  }
+
+  void _selectFilter(SoundEventKind? kind) {
+    if (_filterKind == kind) return;
+    setState(() => _filterKind = kind);
+  }
+
+  void _seekTo(List<SoundEvent> events, int index) {
+    if (index < 0 || index >= events.length) return;
+    unawaited(widget.onSeek(events[index].startSeconds));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
+    final events = _filteredEvents;
+    final activeIndex = _activeIndex(events);
+    final previousIndex = activeIndex - 1;
+    final nextIndex = activeIndex + 1;
+    final currentPosition = activeIndex >= 0 ? activeIndex + 1 : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          strings.detectedSounds,
+          style: TextStyle(
+            color: colors.text,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              key: const Key('event_filter_all'),
+              label: Text(strings.allEvents),
+              selected: _filterKind == null,
+              onSelected: (_) => _selectFilter(null),
+            ),
+            ChoiceChip(
+              key: const Key('event_filter_snoring'),
+              label: Text(strings.recordingLabelSnoring),
+              selected: _filterKind == SoundEventKind.snoring,
+              onSelected: (_) => _selectFilter(SoundEventKind.snoring),
+            ),
+            ChoiceChip(
+              key: const Key('event_filter_speech'),
+              label: Text(strings.recordingLabelSpeech),
+              selected: _filterKind == SoundEventKind.speech,
+              onSelected: (_) => _selectFilter(SoundEventKind.speech),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            IconButton(
+              key: const Key('previous_sound_event'),
+              tooltip: strings.previousSoundEvent,
+              onPressed: previousIndex >= 0
+                  ? () => _seekTo(events, previousIndex)
+                  : null,
+              icon: const Icon(Icons.skip_previous_rounded),
+            ),
+            Expanded(
+              child: Text(
+                strings.soundEventPosition(currentPosition, events.length),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: colors.muted, fontSize: 12),
+              ),
+            ),
+            IconButton(
+              key: const Key('next_sound_event'),
+              tooltip: strings.nextSoundEvent,
+              onPressed: nextIndex < events.length
+                  ? () => _seekTo(events, nextIndex)
+                  : null,
+              icon: const Icon(Icons.skip_next_rounded),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
 
 class _WaveformTimeline extends StatefulWidget {
   const _WaveformTimeline({
