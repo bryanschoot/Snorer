@@ -243,6 +243,21 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+  @override
+  String get detectedSounds => 'Detected sounds';
+
+  @override
+  String get allEvents => 'All';
+
+  @override
+  String get previousSoundEvent => 'Previous sound';
+
+  @override
+  String get nextSoundEvent => 'Next sound';
+
+  @override
+  String soundEventPosition(int current, int total) =>
+      '$current of $total';
 
   @override
   String get durationHoursUnit => 'h';

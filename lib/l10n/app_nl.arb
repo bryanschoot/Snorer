@@ -91,6 +91,22 @@
       }
     }
   },
+  "detectedSounds": "Gedetecteerde geluiden",
+  "allEvents": "Alle",
+  "previousSoundEvent": "Vorig geluid",
+  "nextSoundEvent": "Volgend geluid",
+  "soundEventPosition": "{current} van {total}",
+  "@soundEventPosition": {
+    "description": "De huidige positie in de gefilterde gedetecteerde geluiden.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "durationHoursUnit": "u",
   "durationMinutesUnit": "m",
   "durationSecondsUnit": "s",

@@ -499,6 +499,35 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 speech moment} other{{count} speech moments}}'**
   String speechMoments(int count);
+  /// No description provided for @detectedSounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected sounds'**
+  String get detectedSounds;
+
+  /// No description provided for @allEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allEvents;
+
+  /// No description provided for @previousSoundEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous sound'**
+  String get previousSoundEvent;
+
+  /// No description provided for @nextSoundEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Next sound'**
+  String get nextSoundEvent;
+
+  /// The current position in the filtered detected sounds.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String soundEventPosition(int current, int total);
 
   /// No description provided for @durationHoursUnit.
   ///

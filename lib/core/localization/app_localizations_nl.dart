@@ -245,6 +245,21 @@ class AppLocalizationsNl extends AppLocalizations {
     );
     return '$_temp0';
   }
+  @override
+  String get detectedSounds => 'Gedetecteerde geluiden';
+
+  @override
+  String get allEvents => 'Alle';
+
+  @override
+  String get previousSoundEvent => 'Vorig geluid';
+
+  @override
+  String get nextSoundEvent => 'Volgend geluid';
+
+  @override
+  String soundEventPosition(int current, int total) =>
+      '$current van $total';
 
   @override
   String get durationHoursUnit => 'u';

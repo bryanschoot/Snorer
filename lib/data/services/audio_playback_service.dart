@@ -120,12 +120,17 @@ class JustAudioPlaybackService implements AudioPlaybackService {
     }
 
     try {
-      await _player.setFilePath(recording.audioPath);
+      final loadedDuration = await _player.setFilePath(recording.audioPath);
       if (_disposed || loadGeneration != _loadGeneration) return;
+      final actualDuration = loadedDuration ?? _player.duration;
+      final actualSeconds =
+          actualDuration?.inMilliseconds.toDouble() ?? 0;
       _setState(
         AudioPlaybackState(
           recordingId: recording.id,
-          durationSeconds: recording.durationSeconds,
+          durationSeconds: actualSeconds > 0
+              ? actualSeconds / 1000
+              : recording.durationSeconds,
         ),
       );
 

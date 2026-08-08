@@ -91,6 +91,22 @@
       }
     }
   },
+  "detectedSounds": "Detected sounds",
+  "allEvents": "All",
+  "previousSoundEvent": "Previous sound",
+  "nextSoundEvent": "Next sound",
+  "soundEventPosition": "{current} of {total}",
+  "@soundEventPosition": {
+    "description": "The current position in the filtered detected sounds.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "durationHoursUnit": "h",
   "durationMinutesUnit": "m",
   "durationSecondsUnit": "s",

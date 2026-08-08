@@ -108,6 +108,20 @@ void main() {
       find.byKey(const Key('recording_playhead')),
     );
     expect(updatedLeft.dx, closeTo(waveformLeft + waveformWidth / 2 - 1, 2));
+    player.emit(
+      const AudioPlaybackState(
+        recordingId: 'night-1',
+        currentSeconds: 100,
+        durationSeconds: 100,
+        isPlaying: false,
+      ),
+    );
+    await tester.pump();
+
+    final endLeft = tester.getTopLeft(
+      find.byKey(const Key('recording_playhead')),
+    );
+    expect(endLeft.dx, closeTo(waveformLeft + waveformWidth - 2, 2));
   });
   testWidgets('seeks from the waveform timeline', (tester) async {
     final recording = StoredRecording(
@@ -146,6 +160,101 @@ void main() {
 
     expect(player.lastSeekSeconds, closeTo(75, 1));
   });
+  testWidgets('filters detected sounds and steps to matching moments', (
+    tester,
+  ) async {
+    final recording = StoredRecording(
+      id: 'night-1',
+      audioPath: '/tmp/night-1.wav',
+      startedAt: DateTime.parse('2026-08-07T22:30:00Z'),
+      durationSeconds: 185,
+      soundEvents: const [
+        SoundEvent(
+          id: 'snore-1',
+          kind: SoundEventKind.snoring,
+          startSeconds: 10,
+          endSeconds: 12,
+          confidence: 0.9,
+        ),
+        SoundEvent(
+          id: 'speech-1',
+          kind: SoundEventKind.speech,
+          startSeconds: 20,
+          endSeconds: 22,
+          confidence: 0.8,
+        ),
+        SoundEvent(
+          id: 'snore-2',
+          kind: SoundEventKind.snoring,
+          startSeconds: 50,
+          endSeconds: 53,
+          confidence: 0.85,
+        ),
+        SoundEvent(
+          id: 'speech-2',
+          kind: SoundEventKind.speech,
+          startSeconds: 80,
+          endSeconds: 82,
+          confidence: 0.75,
+        ),
+      ],
+      label: null,
+    );
+    final player = _FakePlayer();
+    final viewModel = _createViewModel([recording], player: player);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: RecordingsScreen(viewModel: viewModel),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final scrollable = find.byType(Scrollable);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('event_filter_all')),
+      500,
+      scrollable: scrollable,
+    );
+
+    expect(find.text('Gedetecteerde geluiden'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('event_filter_snoring')));
+    await tester.pump();
+    expect(find.text('0 van 2'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('next_sound_event')));
+    expect(player.lastSeekSeconds, closeTo(10, 0.01));
+    player.emit(
+      const AudioPlaybackState(
+        recordingId: 'night-1',
+        currentSeconds: 10,
+        durationSeconds: 185,
+      ),
+    );
+    await tester.pump();
+    expect(find.text('1 van 2'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('next_sound_event')));
+    expect(player.lastSeekSeconds, closeTo(50, 0.01));
+    player.emit(
+      const AudioPlaybackState(
+        recordingId: 'night-1',
+        currentSeconds: 50,
+        durationSeconds: 185,
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('previous_sound_event')));
+    expect(player.lastSeekSeconds, closeTo(10, 0.01));
+
+    await tester.tap(find.byKey(const Key('event_filter_speech')));
+    await tester.pump();
+    expect(find.text('1 van 2'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('next_sound_event')));
+    expect(player.lastSeekSeconds, closeTo(80, 0.01));
+  });
+
 
   testWidgets('switches the recorder card to stop mode after starting', (
     tester,
