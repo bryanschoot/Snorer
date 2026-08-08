@@ -1037,7 +1037,9 @@ class _RecordingListTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          InkWell(
+          Material(
+            type: MaterialType.transparency,
+            child: InkWell(
             key: Key('select_recording_${recording.id}'),
             onTap: onSelect,
             borderRadius: BorderRadius.circular(12),
@@ -1093,6 +1095,7 @@ class _RecordingListTile extends StatelessWidget {
                 ],
               ),
             ),
+          ),
           ),
           const Spacer(),
           Wrap(
