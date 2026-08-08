@@ -155,5 +155,15 @@
     }
   },
   "updateOpen": "View release",
-  "updateOpenFailed": "Could not open the GitHub release."
+  "updateOpenFailed": "Could not open the GitHub release.",
+  "updateInstall": "Install update",
+  "updateInstalling": "Preparing update…",
+  "updateInstallingBody": "The verified APK is downloading. Android's installer will open next.",
+  "updateInstallStarted": "Android installer opened",
+  "updateInstallStartedBody": "Finish the update in Android's installer.",
+  "updateInstallPermission": "Allow installation",
+  "updateInstallPermissionBody": "Android needs permission to install apps from Snorer. Allow it, then tap Install update again.",
+  "updateInstallFailed": "Update installation failed",
+  "updateInstallFailedBody": "The update could not be installed. Try again or view the release.",
+  "updateInstallRetry": "Try installation again"
 }

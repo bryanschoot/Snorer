@@ -714,6 +714,65 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not open the GitHub release.'**
   String get updateOpenFailed;
+  /// No description provided for @updateInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install update'**
+  String get updateInstall;
+
+  /// No description provided for @updateInstalling.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing update…'**
+  String get updateInstalling;
+
+  /// No description provided for @updateInstallingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The verified APK is downloading. Android's installer will open next.'**
+  String get updateInstallingBody;
+
+  /// No description provided for @updateInstallStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Android installer opened'**
+  String get updateInstallStarted;
+
+  /// No description provided for @updateInstallStartedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the update in Android's installer.'**
+  String get updateInstallStartedBody;
+
+  /// No description provided for @updateInstallPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow installation'**
+  String get updateInstallPermission;
+
+  /// No description provided for @updateInstallPermissionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Android needs permission to install apps from Snorer. Allow it, then tap Install update again.'**
+  String get updateInstallPermissionBody;
+
+  /// No description provided for @updateInstallFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Update installation failed'**
+  String get updateInstallFailed;
+
+  /// No description provided for @updateInstallFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The update could not be installed. Try again or view the release.'**
+  String get updateInstallFailedBody;
+
+  /// No description provided for @updateInstallRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try installation again'**
+  String get updateInstallRetry;
 }
 
 class _AppLocalizationsDelegate

@@ -368,4 +368,37 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get updateOpenFailed => 'De GitHub-release kon niet worden geopend.';
+  @override
+  String get updateInstall => 'Update installeren';
+
+  @override
+  String get updateInstalling => 'Update voorbereiden…';
+
+  @override
+  String get updateInstallingBody =>
+      'De gecontroleerde APK wordt gedownload. Daarna opent de Android-installatie.';
+
+  @override
+  String get updateInstallStarted => 'Android-installatie geopend';
+
+  @override
+  String get updateInstallStartedBody =>
+      'Rond de update af in de Android-installatie.';
+
+  @override
+  String get updateInstallPermission => 'Installatie toestaan';
+
+  @override
+  String get updateInstallPermissionBody =>
+      'Android heeft toestemming nodig om apps vanuit Snorer te installeren. Sta dit toe en tik daarna opnieuw op Update installeren.';
+
+  @override
+  String get updateInstallFailed => 'Update installeren mislukt';
+
+  @override
+  String get updateInstallFailedBody =>
+      'De update kon niet worden geïnstalleerd. Probeer het opnieuw of bekijk de release.';
+
+  @override
+  String get updateInstallRetry => 'Opnieuw installeren';
 }

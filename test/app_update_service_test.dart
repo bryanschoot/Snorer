@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -38,6 +40,75 @@ void main() {
     expect(release?.releaseUrl.host, 'github.com');
     service.dispose();
   });
+  test('downloads and verifies the release APK before installation', () async {
+    final apkBytes = <int>[1, 2, 3, 4, 5];
+    final checksum = sha256.convert(apkBytes).toString();
+    final endpoint = Uri.parse(
+      'https://api.github.com/repos/bryanschoot/Snorer/releases/latest',
+    );
+    final apkUrl = Uri.parse(
+      'https://github.com/bryanschoot/Snorer/releases/download/v0.2.5/snorer-v0.2.5.apk',
+    );
+    final checksumUrl = Uri.parse(
+      'https://github.com/bryanschoot/Snorer/releases/download/v0.2.5/snorer-v0.2.5.apk.sha256',
+    );
+    final client = MockClient.streaming((request, _) async {
+      final body = switch (request.url) {
+        _ when request.url == endpoint => jsonEncode({
+          'tag_name': 'v0.2.5',
+          'html_url':
+              'https://github.com/bryanschoot/Snorer/releases/tag/v0.2.5',
+          'draft': false,
+          'prerelease': false,
+          'assets': [
+            {
+              'name': 'snorer-v0.2.5.apk',
+              'browser_download_url': apkUrl.toString(),
+            },
+            {
+              'name': 'snorer-v0.2.5.apk.sha256',
+              'browser_download_url': checksumUrl.toString(),
+            },
+          ],
+        }),
+        _ when request.url == checksumUrl =>
+          '$checksum  release/snorer-v0.2.5.apk',
+        _ => null,
+      };
+      if (body != null) {
+        return http.StreamedResponse(
+          Stream<List<int>>.value(utf8.encode(body)),
+          200,
+          request: request,
+        );
+      }
+      return http.StreamedResponse(
+        Stream<List<int>>.value(apkBytes),
+        200,
+        request: request,
+      );
+    });
+    final installer = _FakeApkInstaller();
+    final temporaryDirectory = await Directory.systemTemp.createTemp(
+      'snorer-update-test-',
+    );
+    final service = GitHubAppUpdateService(
+      client: client,
+      endpoint: endpoint,
+      installer: installer,
+      temporaryDirectoryProvider: () async => temporaryDirectory,
+    );
+
+    final release = await service.checkForUpdate('0.2.4');
+    expect(release?.canInstall, isTrue);
+    expect(await service.install(release!), ApkInstallResult.started);
+    expect(installer.apkPath, isNotNull);
+    expect(await File(installer.apkPath!).readAsBytes(), apkBytes);
+
+    service.dispose();
+    await temporaryDirectory.delete(recursive: true);
+  });
+
 
   test('returns no update when GitHub has the installed version', () async {
     final client = MockClient((_) async {
@@ -80,4 +151,13 @@ void main() {
       throwsFormatException,
     );
   });
+}
+class _FakeApkInstaller implements ApkInstaller {
+  String? apkPath;
+
+  @override
+  Future<ApkInstallResult> install(String apkPath) async {
+    this.apkPath = apkPath;
+    return ApkInstallResult.started;
+  }
 }

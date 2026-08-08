@@ -363,4 +363,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateOpenFailed => 'Could not open the GitHub release.';
+  @override
+  String get updateInstall => 'Install update';
+
+  @override
+  String get updateInstalling => 'Preparing update…';
+
+  @override
+  String get updateInstallingBody =>
+      "The verified APK is downloading. Android's installer will open next.";
+
+  @override
+  String get updateInstallStarted => 'Android installer opened';
+
+  @override
+  String get updateInstallStartedBody =>
+      "Finish the update in Android's installer.";
+
+  @override
+  String get updateInstallPermission => 'Allow installation';
+
+  @override
+  String get updateInstallPermissionBody =>
+      'Android needs permission to install apps from Snorer. Allow it, then tap Install update again.';
+
+  @override
+  String get updateInstallFailed => 'Update installation failed';
+
+  @override
+  String get updateInstallFailedBody =>
+      'The update could not be installed. Try again or view the release.';
+
+  @override
+  String get updateInstallRetry => 'Try installation again';
 }

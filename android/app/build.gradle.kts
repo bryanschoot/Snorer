@@ -5,6 +5,9 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+dependencies {
+    implementation("androidx.core:core:1.13.1")
+}
 
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()

@@ -123,12 +123,22 @@ void main() {
     await secondSave;
     expect(controller.mode, SnorerThemeMode.pink);
   });
-  testWidgets('checks for updates from settings', (tester) async {
+  testWidgets('checks for updates and starts direct installation', (
+    tester,
+  ) async {
     final service = _FakeUpdateService(
       AppRelease(
         tagName: 'v0.2.5',
         version: const AppVersion(0, 2, 5),
-        releaseUrl: Uri.parse('https://github.com/bryanschoot/Snorer/releases'),
+        releaseUrl: Uri.parse(
+          'https://github.com/bryanschoot/Snorer/releases/tag/v0.2.5',
+        ),
+        apkUrl: Uri.parse(
+          'https://github.com/bryanschoot/Snorer/releases/download/v0.2.5/snorer-v0.2.5.apk',
+        ),
+        checksumUrl: Uri.parse(
+          'https://github.com/bryanschoot/Snorer/releases/download/v0.2.5/snorer-v0.2.5.apk.sha256',
+        ),
       ),
     );
     final updateController = UpdateController(
@@ -170,7 +180,14 @@ void main() {
       updateController.status,
       UpdateCheckStatus.updateAvailable,
     );
+    expect(find.byKey(const Key('install_update')), findsOneWidget);
     expect(find.byKey(const Key('open_update_release')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('install_update')));
+    await tester.pumpAndSettle();
+
+    expect(service.installs, 1);
+    expect(updateController.status, UpdateCheckStatus.installStarted);
   });
 }
 
@@ -228,11 +245,17 @@ class _FakeUpdateService implements AppUpdateService {
 
   final AppRelease? release;
   int checks = 0;
+  int installs = 0;
 
   @override
   Future<AppRelease?> checkForUpdate(String currentVersion) async {
     checks += 1;
     return release;
+  }
+  @override
+  Future<ApkInstallResult> install(AppRelease release) async {
+    installs += 1;
+    return ApkInstallResult.started;
   }
 
   @override

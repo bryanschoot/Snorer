@@ -35,6 +35,11 @@ class UpdateCard extends StatelessWidget {
         final title = switch (status) {
           UpdateCheckStatus.updateAvailable => strings.updateAvailableTitle,
           UpdateCheckStatus.checking => strings.updateChecking,
+          UpdateCheckStatus.installing => strings.updateInstalling,
+          UpdateCheckStatus.installStarted => strings.updateInstallStarted,
+          UpdateCheckStatus.installPermissionRequired =>
+            strings.updateInstallPermission,
+          UpdateCheckStatus.installFailed => strings.updateInstallFailed,
           UpdateCheckStatus.upToDate => strings.updateUpToDate,
           UpdateCheckStatus.failed => strings.updateCheckFailed,
           UpdateCheckStatus.idle => strings.updateCheckTitle,
@@ -44,6 +49,11 @@ class UpdateCard extends StatelessWidget {
             release!.version.toString(),
           ),
           UpdateCheckStatus.checking => strings.updateCheckingBody,
+          UpdateCheckStatus.installing => strings.updateInstallingBody,
+          UpdateCheckStatus.installStarted => strings.updateInstallStartedBody,
+          UpdateCheckStatus.installPermissionRequired =>
+            strings.updateInstallPermissionBody,
+          UpdateCheckStatus.installFailed => strings.updateInstallFailedBody,
           UpdateCheckStatus.upToDate => strings.updateUpToDateBody,
           UpdateCheckStatus.failed => strings.updateCheckFailedBody,
           UpdateCheckStatus.idle => strings.updateCheckBody,
@@ -88,7 +98,31 @@ class UpdateCard extends StatelessWidget {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: [
+                      if (release != null &&
+                          release.canInstall &&
+                          status != UpdateCheckStatus.installStarted)
+                        FilledButton.icon(
+                          key: const Key('install_update'),
+                          onPressed: status == UpdateCheckStatus.installing
+                              ? null
+                              : () => unawaited(
+                                  controller.installUpdate(),
+                                ),
+                          icon: Icon(
+                            status == UpdateCheckStatus.installing
+                                ? Icons.downloading_rounded
+                                : Icons.install_mobile_rounded,
+                          ),
+                          label: Text(
+                            status == UpdateCheckStatus.installPermissionRequired
+                                ? strings.updateInstallRetry
+                                : status == UpdateCheckStatus.installFailed
+                                ? strings.updateInstallRetry
+                                : status == UpdateCheckStatus.installing
+                                ? strings.updateInstalling
+                                : strings.updateInstall,
+                          ),
+                        ),
                       if (release != null)
                         FilledButton.icon(
                           key: const Key('open_update_release'),
@@ -101,7 +135,9 @@ class UpdateCard extends StatelessWidget {
                       if (showCheckButton)
                         OutlinedButton.icon(
                           key: const Key('check_for_updates'),
-                          onPressed: status == UpdateCheckStatus.checking
+                          onPressed:
+                              status == UpdateCheckStatus.checking ||
+                                  status == UpdateCheckStatus.installing
                               ? null
                               : () => unawaited(controller.checkForUpdate()),
                           icon: const Icon(Icons.refresh_rounded),

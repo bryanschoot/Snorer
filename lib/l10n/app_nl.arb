@@ -155,5 +155,15 @@
     }
   },
   "updateOpen": "Release bekijken",
-  "updateOpenFailed": "De GitHub-release kon niet worden geopend."
+  "updateOpenFailed": "De GitHub-release kon niet worden geopend.",
+  "updateInstall": "Update installeren",
+  "updateInstalling": "Update voorbereiden…",
+  "updateInstallingBody": "De gecontroleerde APK wordt gedownload. Daarna opent de Android-installatie.",
+  "updateInstallStarted": "Android-installatie geopend",
+  "updateInstallStartedBody": "Rond de update af in de Android-installatie.",
+  "updateInstallPermission": "Installatie toestaan",
+  "updateInstallPermissionBody": "Android heeft toestemming nodig om apps vanuit Snorer te installeren. Sta dit toe en tik daarna opnieuw op Update installeren.",
+  "updateInstallFailed": "Update installeren mislukt",
+  "updateInstallFailedBody": "De update kon niet worden geïnstalleerd. Probeer het opnieuw of bekijk de release.",
+  "updateInstallRetry": "Opnieuw installeren"
 }

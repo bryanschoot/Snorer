@@ -7,6 +7,10 @@ enum UpdateCheckStatus {
   checking,
   upToDate,
   updateAvailable,
+  installing,
+  installStarted,
+  installPermissionRequired,
+  installFailed,
   failed,
 }
 
@@ -42,6 +46,24 @@ class UpdateController extends ChangeNotifier {
       _availableRelease = null;
       _error = error;
       _status = UpdateCheckStatus.failed;
+    }
+    notifyListeners();
+  }
+  Future<void> installUpdate() async {
+    final release = _availableRelease;
+    if (release == null || _status == UpdateCheckStatus.installing) return;
+
+    _status = UpdateCheckStatus.installing;
+    _error = null;
+    notifyListeners();
+    try {
+      final result = await service.install(release);
+      _status = result == ApkInstallResult.permissionRequired
+          ? UpdateCheckStatus.installPermissionRequired
+          : UpdateCheckStatus.installStarted;
+    } catch (error) {
+      _error = error;
+      _status = UpdateCheckStatus.installFailed;
     }
     notifyListeners();
   }
