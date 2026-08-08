@@ -65,6 +65,25 @@ void main() {
 
     expect(viewModel.recordings.single.label, RecordingLabel.snoring);
   });
+  testWidgets('keeps recordings below system bars', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildSnorerTheme(),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            padding: EdgeInsets.only(top: 24),
+          ),
+          child: RecordingsScreen(viewModel: _createViewModel(const [])),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final listTop = tester.getTopLeft(
+      find.byKey(const Key('recordings_scroll_view')),
+    );
+    expect(listTop.dy, greaterThanOrEqualTo(24));
+  });
   testWidgets('shows waveform duration without playback controls', (
     tester,
   ) async {

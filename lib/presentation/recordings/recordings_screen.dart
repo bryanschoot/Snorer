@@ -45,7 +45,9 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
     if (widget.updateController != null) {
       listenables.add(widget.updateController!);
     }
-    return ListenableBuilder(
+    return Scaffold(
+      body: SafeArea(
+        child: ListenableBuilder(
       listenable: Listenable.merge(listenables),
       builder: (context, _) {
         final viewModel = widget.viewModel;
@@ -126,6 +128,8 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
           },
         );
       },
+        ),
+      ),
     );
   }
 
