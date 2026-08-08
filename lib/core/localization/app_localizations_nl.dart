@@ -190,6 +190,18 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get aboutBody =>
       'Een eenvoudige slaaprecorder zonder advertenties en zonder account.';
+  @override
+  String get aboutAuthorLabel => 'Gemaakt door';
+
+  @override
+  String get aboutAuthor => 'Bryan Schoot';
+
+  @override
+  String get aboutVersionLabel => 'Versie';
+
+  @override
+  String get aboutBuildLabel => 'Build';
+
 
   @override
   String get themeDark => 'Donker';

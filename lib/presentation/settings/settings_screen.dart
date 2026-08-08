@@ -15,12 +15,16 @@ class SettingsScreen extends StatelessWidget {
     super.key,
     required this.themeController,
     required this.languageController,
+    required this.appVersion,
+    required this.appBuild,
     this.updateController,
   });
 
   final ThemeController themeController;
   final LanguageController languageController;
   final UpdateController? updateController;
+  final String appVersion;
+  final String appBuild;
 
   @override
   Widget build(BuildContext context) {
@@ -201,13 +205,41 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Card(
-              child: ListTile(
-                leading: _SettingsIcon(
-                  icon: Icons.nightlight_round,
-                  colors: colors,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: _SettingsIcon(
+                        icon: Icons.nightlight_round,
+                        colors: colors,
+                      ),
+                      title: Text(strings.aboutTitle),
+                      subtitle: Text(strings.aboutBody),
+                    ),
+                    Divider(height: 1, color: colors.border),
+                    const SizedBox(height: 4),
+                    _AboutDetailRow(
+                      key: const Key('about_author'),
+                      label: strings.aboutAuthorLabel,
+                      value: strings.aboutAuthor,
+                      colors: colors,
+                    ),
+                    _AboutDetailRow(
+                      key: const Key('about_version'),
+                      label: strings.aboutVersionLabel,
+                      value: appVersion,
+                      colors: colors,
+                    ),
+                    _AboutDetailRow(
+                      key: const Key('about_build'),
+                      label: strings.aboutBuildLabel,
+                      value: appBuild,
+                      colors: colors,
+                    ),
+                  ],
                 ),
-                title: Text(strings.aboutTitle),
-                subtitle: Text(strings.aboutBody),
               ),
             ),
           ],
@@ -367,6 +399,42 @@ class _LanguageOption extends StatelessWidget {
   }
 }
 
+
+class _AboutDetailRow extends StatelessWidget {
+  const _AboutDetailRow({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.colors,
+  });
+
+  final String label;
+  final String value;
+  final SnorerThemePalette colors;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(color: colors.muted, fontSize: 13),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
 class _SettingsSectionTitle extends StatelessWidget {
   const _SettingsSectionTitle({

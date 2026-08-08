@@ -17,6 +17,8 @@ class SnorerApp extends StatelessWidget {
     required this.viewModel,
     required this.themeController,
     required this.languageController,
+    required this.appVersion,
+    required this.appBuild,
     this.updateController,
   });
 
@@ -24,6 +26,8 @@ class SnorerApp extends StatelessWidget {
   final ThemeController themeController;
   final LanguageController languageController;
   final UpdateController? updateController;
+  final String appVersion;
+  final String appBuild;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +54,8 @@ class SnorerApp extends StatelessWidget {
                 builder: (_) => SettingsScreen(
                   themeController: themeController,
                   languageController: languageController,
+                  appVersion: appVersion,
+                  appBuild: appBuild,
                   updateController: updateController,
                 ),
               ),

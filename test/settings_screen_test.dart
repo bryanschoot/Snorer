@@ -30,6 +30,8 @@ void main() {
           home: SettingsScreen(
             themeController: controller,
             languageController: languageController,
+            appVersion: '0.2.18',
+            appBuild: '20',
           ),
         ),
       ),
@@ -48,6 +50,14 @@ void main() {
       ).scaffoldBackgroundColor,
       buildSnorerTheme(SnorerThemeMode.pink).scaffoldBackgroundColor,
     );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('about_version')),
+      400,
+      scrollable: find.byType(Scrollable),
+    );
+    expect(find.byKey(const Key('about_author')), findsOneWidget);
+    expect(find.text('0.2.18'), findsOneWidget);
+    expect(find.text('20'), findsOneWidget);
   });
 
   test('restores the persisted light theme', () async {
@@ -86,6 +96,8 @@ void main() {
           home: SettingsScreen(
             themeController: themeController,
             languageController: languageController,
+            appVersion: '0.2.18',
+            appBuild: '20',
           ),
         ),
       ),
@@ -160,6 +172,8 @@ void main() {
         home: SettingsScreen(
           themeController: themeController,
           languageController: languageController,
+          appVersion: '0.2.18',
+          appBuild: '20',
           updateController: updateController,
         ),
       ),

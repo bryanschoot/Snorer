@@ -188,6 +188,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutBody => 'A simple sleep recorder without ads or an account.';
+  @override
+  String get aboutAuthorLabel => 'Created by';
+
+  @override
+  String get aboutAuthor => 'Bryan Schoot';
+
+  @override
+  String get aboutVersionLabel => 'Version';
+
+  @override
+  String get aboutBuildLabel => 'Build';
+
 
   @override
   String get themeDark => 'Dark';

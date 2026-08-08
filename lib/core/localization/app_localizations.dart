@@ -421,6 +421,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A simple sleep recorder without ads or an account.'**
   String get aboutBody;
+  /// No description provided for @aboutAuthorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created by'**
+  String get aboutAuthorLabel;
+
+  /// No description provided for @aboutAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Bryan Schoot'**
+  String get aboutAuthor;
+
+  /// No description provided for @aboutVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get aboutVersionLabel;
+
+  /// No description provided for @aboutBuildLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Build'**
+  String get aboutBuildLabel;
+
 
   /// No description provided for @themeDark.
   ///

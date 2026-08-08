@@ -56,6 +56,8 @@ Future<void> main() async {
       viewModel: viewModel,
       themeController: themeController,
       languageController: languageController,
+      appVersion: packageInfo.version,
+      appBuild: packageInfo.buildNumber,
       updateController: updateController,
     ),
   );

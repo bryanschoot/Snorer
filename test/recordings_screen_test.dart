@@ -324,6 +324,8 @@ void main() {
         viewModel: _createViewModel(const []),
         themeController: themeController,
         languageController: languageController,
+        appVersion: '0.2.18',
+        appBuild: '20',
       ),
     );
     await tester.pumpAndSettle();
