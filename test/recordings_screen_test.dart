@@ -183,10 +183,12 @@ void main() {
     expect(find.text('1 snurkmoment'), findsOneWidget);
     expect(find.text('1 praatmoment'), findsOneWidget);
     await tester.tap(find.byKey(const Key('event_filter_snoring')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('next_sound_event')));
     expect(player.lastSeekSeconds, 10);
 
     await tester.tap(find.byKey(const Key('event_filter_speech')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('next_sound_event')));
     expect(player.lastSeekSeconds, 20);
   });
