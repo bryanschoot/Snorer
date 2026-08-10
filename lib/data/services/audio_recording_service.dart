@@ -8,8 +8,13 @@ import '../../core/errors/snorer_error.dart';
 import '../../domain/models/recording.dart';
 import '../../domain/services/sound_detection.dart';
 import '../repositories/recording_repository.dart';
+import 'audio_pcm_decoder.dart';
 import 'foreground_recording_service.dart';
 import 'sound_model_service.dart';
+
+const _aacBitRate = 64000;
+const _pcmReadChunkBytes = 32 * 1024;
+const _pcmBytesPerSample = 2;
 
 enum AudioRecordingStatus { idle, starting, recording, stopping, error }
 
@@ -69,13 +74,16 @@ class DeviceAudioRecordingService implements AudioRecordingService {
     required RecordingRepository repository,
     required SoundModelService soundModel,
     required ForegroundRecordingController foregroundController,
+    AudioPcmDecoder? decoder,
   }) : _repository = repository,
        _soundModel = soundModel,
-       _foregroundController = foregroundController;
+       _foregroundController = foregroundController,
+       _decoder = decoder ?? const MethodChannelAudioPcmDecoder();
 
   final RecordingRepository _repository;
   final SoundModelService _soundModel;
   final ForegroundRecordingController _foregroundController;
+  final AudioPcmDecoder _decoder;
   final AudioRecorder _recorder = AudioRecorder();
   final StreamController<AudioRecordingState> _stateController =
       StreamController<AudioRecordingState>.broadcast();
@@ -93,6 +101,7 @@ class DeviceAudioRecordingService implements AudioRecordingService {
   final List<SoundEvent> _soundEvents = [];
   int _processedSamples = 0;
   int _inputSampleRate = yamnetSampleRate;
+  bool _compressedRecording = false;
   bool _disposed = false;
 
   @override
@@ -146,9 +155,15 @@ class DeviceAudioRecordingService implements AudioRecordingService {
 
       _resetSession();
       _startedAt = DateTime.now();
-      _audioPath = await _repository.createAudioPath(_startedAt!);
-      _audioFile = await File(_audioPath!).open(mode: FileMode.write);
-      await _audioFile!.writeFrom(_waveHeader(0));
+      _compressedRecording = await _supportsAacRecording();
+      final repositoryPath = await _repository.createAudioPath(_startedAt!);
+      _audioPath = _compressedRecording
+          ? _m4aPath(repositoryPath)
+          : repositoryPath;
+      if (!_compressedRecording) {
+        _audioFile = await File(_audioPath!).open(mode: FileMode.write);
+        await _audioFile!.writeFrom(_waveHeader(0));
+      }
 
       try {
         await _soundModel.initialize();
@@ -164,30 +179,44 @@ class DeviceAudioRecordingService implements AudioRecordingService {
       }
 
       await _foregroundController.start();
-      await _recorder.setOnConfigChanged((config) {
-        if (config.sampleRate > 0) _inputSampleRate = config.sampleRate;
-      });
-      final stream = await _recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: yamnetSampleRate,
-          numChannels: 1,
-          streamBufferSize: 3200,
-        ),
-      );
-      _streamDone = Completer<void>();
-      _pcmSubscription = stream.listen(
-        _handlePcmChunk,
-        onError: (Object error, StackTrace stackTrace) {
-          if (!(_streamDone?.isCompleted ?? true)) {
-            _streamDone!.completeError(error, stackTrace);
-          }
-        },
-        onDone: () {
-          if (!(_streamDone?.isCompleted ?? true)) _streamDone!.complete();
-        },
-        cancelOnError: false,
-      );
+      if (_compressedRecording) {
+        await _recorder.start(
+          const RecordConfig(
+            encoder: AudioEncoder.aacLc,
+            bitRate: _aacBitRate,
+            sampleRate: yamnetSampleRate,
+            numChannels: 1,
+          ),
+          path: _audioPath!,
+        );
+      } else {
+        await _recorder.setOnConfigChanged((config) {
+          if (config.sampleRate > 0) _inputSampleRate = config.sampleRate;
+        });
+        final stream = await _recorder.startStream(
+          const RecordConfig(
+            encoder: AudioEncoder.pcm16bits,
+            sampleRate: yamnetSampleRate,
+            numChannels: 1,
+            streamBufferSize: 3200,
+          ),
+        );
+        _streamDone = Completer<void>();
+        _pcmSubscription = stream.listen(
+          _handlePcmChunk,
+          onError: (Object error, StackTrace stackTrace) {
+            if (!(_streamDone?.isCompleted ?? true)) {
+              _streamDone!.completeError(error, stackTrace);
+            }
+          },
+          onDone: () {
+            if (!(_streamDone?.isCompleted ?? true)) {
+              _streamDone!.complete();
+            }
+          },
+          cancelOnError: false,
+        );
+      }
       _durationTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
         final startedAt = _startedAt;
         if (startedAt == null) return;
@@ -224,16 +253,8 @@ class DeviceAudioRecordingService implements AudioRecordingService {
 
     _setState(_state.copyWith(status: AudioRecordingStatus.stopping));
     try {
+      final compressedRecording = _compressedRecording;
       await _recorder.stop();
-      final streamDone = _streamDone;
-      if (streamDone != null) {
-        await streamDone.future.timeout(const Duration(seconds: 5));
-      }
-      await _pcmSubscription?.cancel();
-      _flushSoundDetection();
-      await _analysisQueue;
-      await _writeQueue;
-
       final path = _audioPath;
       final startedAt = _startedAt;
       if (path == null || startedAt == null) {
@@ -241,7 +262,21 @@ class DeviceAudioRecordingService implements AudioRecordingService {
       }
       final durationSeconds =
           DateTime.now().difference(startedAt).inMilliseconds / 1000;
-      await _finalizeWaveFile();
+
+      if (compressedRecording) {
+        await _analyzeCompressedAudio(path);
+      } else {
+        final streamDone = _streamDone;
+        if (streamDone != null) {
+          await streamDone.future.timeout(const Duration(seconds: 5));
+        }
+        await _pcmSubscription?.cancel();
+        _flushSoundDetection();
+        await _analysisQueue;
+        await _writeQueue;
+        await _finalizeWaveFile();
+      }
+
       await _foregroundController.stop();
       final draft = RecordingDraft(
         audioPath: path,
@@ -285,21 +320,85 @@ class DeviceAudioRecordingService implements AudioRecordingService {
     _inputSampleRate = yamnetSampleRate;
     _analysisQueue = Future<void>.value();
     _writeQueue = Future<void>.value();
+    _compressedRecording = false;
   }
 
-  void _handlePcmChunk(Uint8List bytes) {
-    final samples = <double>[];
+  Future<bool> _supportsAacRecording() async {
+    try {
+      return await _recorder.isEncoderSupported(AudioEncoder.aacLc);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String _m4aPath(String path) {
+    if (path.toLowerCase().endsWith('.wav')) {
+      return '${path.substring(0, path.length - 4)}.m4a';
+    }
+    return '$path.m4a';
+  }
+
+  Future<void> _analyzeCompressedAudio(String path) async {
+    if (!_soundModel.isReady) return;
+
+    final decoded = await _decoder.decode(path);
+    final file = await File(decoded.path).open();
+    try {
+      while (true) {
+        final bytes = await file.read(_pcmReadChunkBytes);
+        if (bytes.isEmpty) break;
+        _handlePcmChunk(
+          bytes,
+          inputSampleRate: decoded.sampleRate,
+          channels: decoded.channels,
+          persist: false,
+        );
+        await _analysisQueue;
+      }
+      _flushSoundDetection();
+      await _analysisQueue;
+    } finally {
+      await file.close();
+      try {
+        await File(decoded.path).delete();
+      } catch (_) {}
+    }
+  }
+
+  void _handlePcmChunk(
+    Uint8List bytes, {
+    int? inputSampleRate,
+    int channels = 1,
+    bool persist = true,
+  }) {
+    if (channels <= 0) return;
+    final bytesPerFrame = channels * _pcmBytesPerSample;
     final data = ByteData.sublistView(bytes);
-    for (var offset = 0; offset + 1 < data.lengthInBytes; offset += 2) {
-      samples.add(data.getInt16(offset, Endian.little) / 32768.0);
+    final samples = <double>[];
+    for (
+      var offset = 0;
+      offset + bytesPerFrame <= data.lengthInBytes;
+      offset += bytesPerFrame
+    ) {
+      var sample = 0.0;
+      for (var channel = 0; channel < channels; channel += 1) {
+        final channelOffset = offset + channel * _pcmBytesPerSample;
+        sample += data.getInt16(channelOffset, Endian.little) / 32768.0;
+      }
+      samples.add(sample / channels);
     }
     if (samples.isEmpty) return;
 
-    _writeQueue = _writeQueue.then((_) async {
-      await _audioFile?.writeFrom(bytes);
-    });
+    if (persist && _audioFile != null) {
+      _writeQueue = _writeQueue.then((_) async {
+        await _audioFile?.writeFrom(bytes);
+      });
+    }
 
-    final normalized = resampleLinear(samples, _inputSampleRate);
+    final normalized = resampleLinear(
+      samples,
+      inputSampleRate ?? _inputSampleRate,
+    );
     _sampleBuffer.addAll(normalized);
     while (_sampleBuffer.length >= yamnetWindowSamples) {
       final frame = _sampleBuffer.sublist(0, yamnetWindowSamples);

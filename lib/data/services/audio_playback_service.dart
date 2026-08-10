@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../../core/errors/snorer_error.dart';
 import '../../domain/models/recording.dart';
+import 'audio_pcm_decoder.dart';
 
 class AudioPlaybackState {
   const AudioPlaybackState({
@@ -60,7 +61,8 @@ abstract interface class AudioPlaybackService {
 }
 
 class JustAudioPlaybackService implements AudioPlaybackService {
-  JustAudioPlaybackService() {
+  JustAudioPlaybackService({AudioPcmDecoder? decoder})
+      : _decoder = decoder ?? const MethodChannelAudioPcmDecoder() {
     _subscriptions.add(
       _player.positionStream.listen((position) {
         _setState(
@@ -91,6 +93,7 @@ class JustAudioPlaybackService implements AudioPlaybackService {
   }
 
   final AudioPlayer _player = AudioPlayer();
+  final AudioPcmDecoder _decoder;
   final StreamController<AudioPlaybackState> _stateController =
       StreamController<AudioPlaybackState>.broadcast();
   final List<StreamSubscription<dynamic>> _subscriptions = [];
@@ -162,14 +165,44 @@ class JustAudioPlaybackService implements AudioPlaybackService {
   }
 
   Future<List<double>> _readWaveform(String path) async {
-    const headerBytes = 44;
+    if (path.toLowerCase().endsWith('.wav')) {
+      return _readPcmWaveform(
+        path,
+        headerBytes: 44,
+        channels: 1,
+      );
+    }
+
+    final decoded = await _decoder.decode(path);
+    try {
+      return _readPcmWaveform(
+        decoded.path,
+        headerBytes: 0,
+        channels: decoded.channels,
+      );
+    } finally {
+      try {
+        await File(decoded.path).delete();
+      } catch (_) {}
+    }
+  }
+
+  Future<List<double>> _readPcmWaveform(
+    String path, {
+    required int headerBytes,
+    required int channels,
+  }) async {
     const bucketCount = 96;
     const windowsPerBucket = 4;
     const samplesPerWindow = 256;
+    const bytesPerSample = 2;
+    if (channels <= 0) return const [];
+
+    final bytesPerFrame = channels * bytesPerSample;
     final file = await File(path).open();
     try {
       final dataLength = await file.length() - headerBytes;
-      final sampleCount = dataLength ~/ 2;
+      final sampleCount = dataLength ~/ bytesPerFrame;
       if (sampleCount <= 0) return const [];
 
       final peaks = List<double>.filled(bucketCount, 0);
@@ -184,16 +217,23 @@ class JustAudioPlaybackService implements AudioPlaybackService {
           final samplesToRead = remaining < samplesPerWindow
               ? remaining
               : samplesPerWindow;
-          await file.setPosition(headerBytes + windowStart * 2);
-          final bytes = await file.read(samplesToRead * 2);
+          await file.setPosition(
+            headerBytes + windowStart * bytesPerFrame,
+          );
+          final bytes = await file.read(samplesToRead * bytesPerFrame);
           final data = ByteData.sublistView(bytes);
-          for (var offset = 0;
-              offset + 1 < data.lengthInBytes;
-              offset += 2) {
-            final amplitude =
-                (data.getInt16(offset, Endian.little).abs() / 32768)
-                    .clamp(0, 1)
-                    .toDouble();
+          for (
+            var offset = 0;
+            offset + bytesPerFrame <= data.lengthInBytes;
+            offset += bytesPerFrame
+          ) {
+            var amplitude = 0.0;
+            for (var channel = 0; channel < channels; channel += 1) {
+              final sampleOffset = offset + channel * bytesPerSample;
+              amplitude +=
+                  data.getInt16(sampleOffset, Endian.little).abs() / 32768;
+            }
+            amplitude = (amplitude / channels).clamp(0, 1).toDouble();
             if (amplitude > peaks[bucket]) peaks[bucket] = amplitude;
           }
         }

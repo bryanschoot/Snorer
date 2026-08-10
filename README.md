@@ -15,14 +15,16 @@ flutter build apk --release
 
 The app requests microphone and notification permissions before recording. A
 recording runs through an Android microphone foreground service so it can
-continue when the screen is locked. Audio is stored as a private PCM WAV file;
-YAMNet inference runs locally and stores only snoring/speech events in `SharedPreferences`.
+continue when the screen is locked. Audio is stored as an AAC-LC M4A file when
+the device supports the encoder, with PCM WAV retained as a fallback. YAMNet
+inference runs locally from bounded decoded PCM chunks after recording and
+stores only snoring/speech events in `SharedPreferences`.
 
 ## Structure
 
-- `lib/domain/`: immutable recording models and YAMNet event rules.
-- `lib/data/`: local metadata repository, PCM/WAV recorder, foreground service,
-  TFLite model adapter, and audio playback.
+- `lib/data/`: local metadata repository, AAC/M4A and PCM/WAV recorder,
+  Android PCM decoder, foreground service, TFLite model adapter, and audio
+  playback.
 - `lib/presentation/`: `ChangeNotifier` view models, the recording interface,
   playback controls, and settings with persisted dark, light, Hurm, Dutch, English,
   and recording-size-unit choices.
