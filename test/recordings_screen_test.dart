@@ -41,7 +41,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final scrollable = find.byType(Scrollable);
+    final scrollable = find.byKey(const Key('recordings_scroll_view'));
     await tester.scrollUntilVisible(
       find.text('Lokale opnames'),
       500,
@@ -318,8 +318,8 @@ void main() {
         themeController: themeController,
         languageController: languageController,
         recordingSizeController: recordingSizeController,
-        appVersion: '0.2.20',
-        appBuild: '22',
+        appVersion: '0.2.21',
+        appBuild: '23',
       ),
     );
     await tester.pumpAndSettle();
