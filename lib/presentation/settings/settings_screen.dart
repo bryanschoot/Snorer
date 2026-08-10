@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import '../../core/localization/snorer_language.dart';
 import '../../core/localization/snorer_localizations.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/recording_size_unit.dart';
 import '../update/update_card.dart';
 import '../update/update_controller.dart';
 import 'language_controller.dart';
+import 'recording_size_controller.dart';
 import 'theme_controller.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -15,6 +17,7 @@ class SettingsScreen extends StatelessWidget {
     super.key,
     required this.themeController,
     required this.languageController,
+    required this.recordingSizeController,
     required this.appVersion,
     required this.appBuild,
     this.updateController,
@@ -22,6 +25,7 @@ class SettingsScreen extends StatelessWidget {
 
   final ThemeController themeController;
   final LanguageController languageController;
+  final RecordingSizeController recordingSizeController;
   final UpdateController? updateController;
   final String appVersion;
   final String appBuild;
@@ -149,6 +153,54 @@ class SettingsScreen extends StatelessWidget {
                             selected: languageController.language == language,
                             onSelected: () => unawaited(
                               languageController.setLanguage(language),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 26),
+            _SettingsSectionTitle(
+              icon: Icons.data_usage_rounded,
+              title: strings.recordingSize,
+              colors: colors,
+            ),
+            const SizedBox(height: 10),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: ListenableBuilder(
+                  listenable: recordingSizeController,
+                  builder: (context, _) => RadioGroup<RecordingSizeUnit>(
+                    groupValue: recordingSizeController.unit,
+                    onChanged: (unit) {
+                      if (unit != null) {
+                        unawaited(recordingSizeController.setUnit(unit));
+                      }
+                    },
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              strings.recordingSizeHint,
+                              style: TextStyle(
+                                color: colors.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        for (final unit in RecordingSizeUnit.values)
+                          _RecordingSizeOption(
+                            unit: unit,
+                            selected: recordingSizeController.unit == unit,
+                            onSelected: () => unawaited(
+                              recordingSizeController.setUnit(unit),
                             ),
                           ),
                       ],
@@ -399,6 +451,72 @@ class _LanguageOption extends StatelessWidget {
   }
 }
 
+
+class _RecordingSizeOption extends StatelessWidget {
+  const _RecordingSizeOption({
+    required this.unit,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final RecordingSizeUnit unit;
+  final bool selected;
+  final VoidCallback onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.snorerColors;
+    final strings = SnorerLocalizations.of(context);
+    return Semantics(
+      container: true,
+      selected: selected,
+      button: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Material(
+          color: selected ? colors.primaryContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            key: Key('recording_size_option_${unit.name}'),
+            onTap: onSelected,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.data_usage_rounded,
+                    color: selected ? colors.primary : colors.muted,
+                    size: 21,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      strings.recordingSizeUnitLabel(unit),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: selected
+                        ? Icon(
+                            key: Key('recording_size_selected_${unit.name}'),
+                            Icons.check_circle_rounded,
+                            color: colors.primary,
+                            size: 20,
+                          )
+                        : const SizedBox(width: 20, height: 20),
+                  ),
+                  Radio<RecordingSizeUnit>(value: unit),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _AboutDetailRow extends StatelessWidget {
   const _AboutDetailRow({

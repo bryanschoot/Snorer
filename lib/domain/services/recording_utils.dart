@@ -41,8 +41,6 @@ String formatDate(DateTime value) {
   return '${local.day} $month · ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 }
 
-String labelText(RecordingLabel? label) =>
-    label?.displayName ?? 'Nog niet gelabeld';
 
 String eventCountText(SoundEventKind kind, int count) {
   final noun = kind == SoundEventKind.snoring ? 'snurkmoment' : 'praatmoment';

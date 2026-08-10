@@ -11,10 +11,12 @@ import 'data/services/audio_playback_service.dart';
 import 'data/services/audio_recording_service.dart';
 import 'data/services/foreground_recording_service.dart';
 import 'data/services/language_preferences.dart';
+import 'data/services/recording_size_preferences.dart';
 import 'data/services/sound_model_service.dart';
 import 'data/services/theme_preferences.dart';
 import 'presentation/recordings/recordings_view_model.dart';
 import 'presentation/settings/language_controller.dart';
+import 'presentation/settings/recording_size_controller.dart';
 import 'presentation/settings/theme_controller.dart';
 import 'presentation/update/update_controller.dart';
 
@@ -38,8 +40,12 @@ Future<void> main() async {
   final languageController = LanguageController(
     preferences: LocalLanguagePreferences(),
   );
+  final recordingSizeController = RecordingSizeController(
+    preferences: LocalRecordingSizePreferences(),
+  );
   await themeController.initialize();
   await languageController.initialize();
+  await recordingSizeController.initialize();
   foregroundController.setLanguage(languageController.language);
   languageController.addListener(() {
     foregroundController.setLanguage(languageController.language);
@@ -56,6 +62,7 @@ Future<void> main() async {
       viewModel: viewModel,
       themeController: themeController,
       languageController: languageController,
+      recordingSizeController: recordingSizeController,
       appVersion: packageInfo.version,
       appBuild: packageInfo.buildNumber,
       updateController: updateController,

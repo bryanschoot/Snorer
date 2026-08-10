@@ -42,7 +42,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAllContent =>
-      'All local audio files and labels will be permanently removed from this device.';
+      'All local audio files and entries will be permanently removed from this device.';
 
   @override
   String get deleteAll => 'Delete all';
@@ -89,17 +89,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Android keeps the recording active with a visible system notification, even when your screen is locked.';
 
   @override
-  String get detectionReady => 'Snoring and speech are marked locally.';
+  String get detectionReady => 'Snoring and speech are detected locally.';
 
   @override
   String get detectionLoading => 'Preparing sound model…';
 
   @override
   String get detectionUnavailable =>
-      'Recording works, but sound labels are unavailable.';
+      'Recording works, but sound detection is unavailable.';
 
   @override
-  String get detectionIdle => 'Sound labels are processed on this device only.';
+  String get detectionIdle => 'Sound detection is processed on this device only.';
 
   @override
   String get overviewEyebrow => 'OVERVIEW';
@@ -123,7 +123,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyRecordingBody =>
-      'Start a sleep recording before you go to bed. After stopping, the recording and local sound labels will appear here.';
+      'Start a sleep recording before you go to bed. After stopping, the recording and detected sound events will appear here.';
 
   @override
   String get pauseRecording => 'Pause recording';
@@ -164,6 +164,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageHint => 'Choose the app language.';
 
   @override
+  String get recordingSize => 'Recording size';
+
+  @override
+  String get recordingSizeHint => 'Choose the unit used for recording sizes.';
+
+  @override
+  String get recordingSizeMegabytes => 'Megabytes (MB)';
+
+  @override
+  String get recordingSizeGigabytes => 'Gigabytes (GB)';
+
+  @override
   String get privacy => 'Privacy';
 
   @override
@@ -171,7 +183,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPhoneBody =>
-      'Recordings, labels, and sound analysis are stored locally. Snorer uses no account or cloud sync.';
+      'Recordings and sound analysis are stored locally. Snorer uses no account or cloud sync.';
 
   @override
   String get privacyMicrophoneTitle => 'Microphone only while recording';
@@ -226,13 +238,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageEnglish => 'English';
 
   @override
-  String get recordingLabelSnoring => 'Snoring';
+  String get soundEventSnoring => 'Snoring';
 
   @override
-  String get recordingLabelSpeech => 'Speech';
-
-  @override
-  String get recordingLabelNone => 'Not labeled yet';
+  String get soundEventSpeech => 'Speech';
 
   @override
   String snoringMoments(int count) {

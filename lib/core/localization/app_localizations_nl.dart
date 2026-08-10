@@ -42,7 +42,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get deleteAllContent =>
-      'Alle lokale audiobestanden en labels worden permanent van dit apparaat verwijderd.';
+      'Alle lokale audiobestanden en vermeldingen worden permanent van dit apparaat verwijderd.';
 
   @override
   String get deleteAll => 'Alles verwijderen';
@@ -89,18 +89,18 @@ class AppLocalizationsNl extends AppLocalizations {
       'Android houdt de opname actief met een zichtbare systeemmelding, ook als je scherm vergrendelt.';
 
   @override
-  String get detectionReady => 'Snurken en praten worden lokaal gemarkeerd.';
+  String get detectionReady => 'Snurken en praten worden lokaal gedetecteerd.';
 
   @override
-  String get detectionLoading => 'Geluidsmodel wordt klaargemaakt…';
+  String get detectionLoading => 'Geluidsmodel voorbereiden…';
 
   @override
   String get detectionUnavailable =>
-      'Opname werkt, maar geluidslabels zijn niet beschikbaar.';
+      'Opnemen werkt, maar geluidsdetectie is niet beschikbaar.';
 
   @override
   String get detectionIdle =>
-      'Geluidslabels worden alleen op dit apparaat verwerkt.';
+      'Geluidsdetectie wordt alleen op dit apparaat verwerkt.';
 
   @override
   String get overviewEyebrow => 'OVERZICHT';
@@ -124,7 +124,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get emptyRecordingBody =>
-      'Start een slaapopname voordat je gaat slapen. Na het stoppen vind je de opname en lokale geluidslabels hier terug.';
+      'Start een opname voordat je gaat slapen. Na het stoppen verschijnen de opname en gedetecteerde geluiden hier.';
 
   @override
   String get pauseRecording => 'Pauzeer opname';
@@ -165,6 +165,19 @@ class AppLocalizationsNl extends AppLocalizations {
   String get languageHint => 'Kies de taal van de app.';
 
   @override
+  String get recordingSize => 'Grootte van opnames';
+
+  @override
+  String get recordingSizeHint =>
+      'Kies de eenheid waarin de grootte van opnames wordt weergegeven.';
+
+  @override
+  String get recordingSizeMegabytes => 'Megabytes (MB)';
+
+  @override
+  String get recordingSizeGigabytes => 'Gigabytes (GB)';
+
+  @override
   String get privacy => 'Privacy';
 
   @override
@@ -172,7 +185,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get privacyPhoneBody =>
-      'Opnames, labels en geluidsanalyse worden lokaal opgeslagen. Snorer gebruikt geen account of cloudsync.';
+      'Opnames en geluidsanalyse worden lokaal opgeslagen. Snorer gebruikt geen account of cloudsync.';
 
   @override
   String get privacyMicrophoneTitle => 'Microfoon alleen tijdens opnemen';
@@ -228,13 +241,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get languageEnglish => 'Engels';
 
   @override
-  String get recordingLabelSnoring => 'Snurken';
+  String get soundEventSnoring => 'Snurken';
 
   @override
-  String get recordingLabelSpeech => 'Praten';
-
-  @override
-  String get recordingLabelNone => 'Nog niet gelabeld';
+  String get soundEventSpeech => 'Praten';
 
   @override
   String snoringMoments(int count) {

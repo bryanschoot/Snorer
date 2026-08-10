@@ -5,22 +5,26 @@ import 'package:flutter/material.dart';
 import '../../core/errors/snorer_error.dart';
 import '../../core/localization/snorer_localizations.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/recording_size_unit.dart';
 import '../../data/services/audio_recording_service.dart';
 import '../../data/services/audio_playback_service.dart';
 import '../../domain/models/recording.dart';
 import '../../domain/services/recording_utils.dart';
 import 'recordings_view_model.dart';
+import '../settings/recording_size_controller.dart';
 import '../update/update_controller.dart';
 
 class RecordingsScreen extends StatefulWidget {
   const RecordingsScreen({
     super.key,
     required this.viewModel,
+    this.recordingSizeController,
     this.onOpenSettings,
     this.updateController,
   });
 
   final RecordingsViewModel viewModel;
+  final RecordingSizeController? recordingSizeController;
   final VoidCallback? onOpenSettings;
   final UpdateController? updateController;
   @override
@@ -46,6 +50,9 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
     if (widget.updateController != null) {
       listenables.add(widget.updateController!);
     }
+    if (widget.recordingSizeController != null) {
+      listenables.add(widget.recordingSizeController!);
+    }
     return Scaffold(
       body: SafeArea(
         child: ListenableBuilder(
@@ -53,6 +60,9 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
           builder: (context, _) {
             final viewModel = widget.viewModel;
             final strings = SnorerLocalizations.of(context);
+            final sizeUnit =
+                widget.recordingSizeController?.unit ??
+                RecordingSizeUnit.megabytes;
             return LayoutBuilder(
               builder: (context, constraints) {
                 final horizontalPadding = constraints.maxWidth >= 720
@@ -93,6 +103,7 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                     else
                       _RecordingWaveformCard(
                         recording: viewModel.selectedRecording!,
+                        sizeUnit: sizeUnit,
                         playback: viewModel.playerState,
                         onTogglePlayback: viewModel.togglePlayback,
                         onSeek: viewModel.seekTo,
@@ -102,8 +113,8 @@ class _RecordingsScreenState extends State<RecordingsScreen> {
                       _RecordingList(
                         recordings: viewModel.recordings,
                         selectedId: viewModel.selectedRecording?.id,
+                        sizeUnit: sizeUnit,
                         onSelect: viewModel.selectRecording,
-                        onToggleLabel: viewModel.toggleLabel,
                         onDelete: (id) =>
                             _confirmDelete(context, viewModel, id),
                       ),
@@ -689,12 +700,14 @@ class _EmptyRecordingState extends StatelessWidget {
 class _RecordingWaveformCard extends StatelessWidget {
   const _RecordingWaveformCard({
     required this.recording,
+    required this.sizeUnit,
     required this.playback,
     required this.onTogglePlayback,
     required this.onSeek,
   });
 
   final StoredRecording recording;
+  final RecordingSizeUnit sizeUnit;
   final AudioPlaybackState playback;
   final Future<void> Function() onTogglePlayback;
   final Future<void> Function(double seconds) onSeek;
@@ -785,7 +798,8 @@ class _RecordingWaveformCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${strings.recordingLabel(recording.label)} · ${strings.formatDuration(recording.durationSeconds)}',
+                        '${strings.formatDuration(recording.durationSeconds)} · '
+                        '${strings.formatFileSize(recording.fileSizeBytes, sizeUnit)}',
                         style: TextStyle(color: colors.muted, fontSize: 13),
                       ),
                     ],
@@ -958,13 +972,13 @@ class _SoundEventStepperState extends State<_SoundEventStepper> {
             ),
             ChoiceChip(
               key: const Key('event_filter_snoring'),
-              label: Text(strings.recordingLabelSnoring),
+              label: Text(strings.soundEventSnoring),
               selected: _filterKind == SoundEventKind.snoring,
               onSelected: (_) => _selectFilter(SoundEventKind.snoring),
             ),
             ChoiceChip(
               key: const Key('event_filter_speech'),
-              label: Text(strings.recordingLabelSpeech),
+              label: Text(strings.soundEventSpeech),
               selected: _filterKind == SoundEventKind.speech,
               onSelected: (_) => _selectFilter(SoundEventKind.speech),
             ),
@@ -1265,15 +1279,15 @@ class _RecordingList extends StatelessWidget {
   const _RecordingList({
     required this.recordings,
     required this.selectedId,
+    required this.sizeUnit,
     required this.onSelect,
-    required this.onToggleLabel,
     required this.onDelete,
   });
 
   final List<StoredRecording> recordings;
   final String? selectedId;
+  final RecordingSizeUnit sizeUnit;
   final void Function(String id) onSelect;
-  final Future<void> Function(String id, RecordingLabel label) onToggleLabel;
   final Future<void> Function(String id) onDelete;
 
   @override
@@ -1285,9 +1299,8 @@ class _RecordingList extends StatelessWidget {
           child: _RecordingListTile(
             recording: recording,
             selected: recording.id == selectedId,
+            sizeUnit: sizeUnit,
             onSelect: () => onSelect(recording.id),
-            onToggleLabel: (label) =>
-                unawaited(onToggleLabel(recording.id, label)),
             onDelete: () => unawaited(onDelete(recording.id)),
           ),
         ),
@@ -1299,15 +1312,15 @@ class _RecordingListTile extends StatelessWidget {
   const _RecordingListTile({
     required this.recording,
     required this.selected,
+    required this.sizeUnit,
     required this.onSelect,
-    required this.onToggleLabel,
     required this.onDelete,
   });
 
   final StoredRecording recording;
   final bool selected;
+  final RecordingSizeUnit sizeUnit;
   final VoidCallback onSelect;
-  final void Function(RecordingLabel label) onToggleLabel;
   final VoidCallback onDelete;
 
   @override
@@ -1375,7 +1388,8 @@ class _RecordingListTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          strings.formatDuration(recording.durationSeconds),
+                          '${strings.formatDuration(recording.durationSeconds)} · '
+                          '${strings.formatFileSize(recording.fileSizeBytes, sizeUnit)}',
                           style: TextStyle(color: colors.muted, fontSize: 12),
                         ),
                       ],
@@ -1390,16 +1404,6 @@ class _RecordingListTile extends StatelessWidget {
           Wrap(
             spacing: 4,
             children: [
-              _LabelButton(
-                label: RecordingLabel.snoring,
-                active: recording.label == RecordingLabel.snoring,
-                onPressed: () => onToggleLabel(RecordingLabel.snoring),
-              ),
-              _LabelButton(
-                label: RecordingLabel.sleepTalking,
-                active: recording.label == RecordingLabel.sleepTalking,
-                onPressed: () => onToggleLabel(RecordingLabel.sleepTalking),
-              ),
               IconButton(
                 key: Key('delete_recording_${recording.id}'),
                 tooltip: strings.deleteRecordingTooltip,
@@ -1415,38 +1419,6 @@ class _RecordingListTile extends StatelessWidget {
   }
 }
 
-class _LabelButton extends StatelessWidget {
-  const _LabelButton({
-    required this.label,
-    required this.active,
-    required this.onPressed,
-  });
-
-  final RecordingLabel label;
-  final bool active;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.snorerColors;
-    final strings = SnorerLocalizations.of(context);
-    return TextButton(
-      onPressed: onPressed,
-      style: TextButton.styleFrom(
-        foregroundColor: active ? colors.onPrimary : colors.muted,
-        backgroundColor: active ? colors.primaryDark : Colors.transparent,
-        minimumSize: const Size(0, 34),
-        padding: const EdgeInsets.symmetric(horizontal: 7),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-      ),
-      child: Text(
-        strings.recordingLabel(label),
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
 
 class _ErrorCard extends StatelessWidget {
   const _ErrorCard({required this.error});

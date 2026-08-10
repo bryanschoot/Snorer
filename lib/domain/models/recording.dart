@@ -1,23 +1,3 @@
-enum RecordingLabel {
-  snoring,
-  sleepTalking;
-
-  String get jsonValue => switch (this) {
-    RecordingLabel.snoring => 'snoring',
-    RecordingLabel.sleepTalking => 'sleep-talking',
-  };
-
-  String get displayName => switch (this) {
-    RecordingLabel.snoring => 'Snurken',
-    RecordingLabel.sleepTalking => 'Praten',
-  };
-
-  static RecordingLabel? fromJson(Object? value) => switch (value) {
-    'snoring' => RecordingLabel.snoring,
-    'sleep-talking' => RecordingLabel.sleepTalking,
-    _ => null,
-  };
-}
 
 enum SoundEventKind {
   snoring,
@@ -132,7 +112,7 @@ class StoredRecording {
     required this.startedAt,
     required this.durationSeconds,
     required this.soundEvents,
-    required this.label,
+    this.fileSizeBytes = 0,
   });
 
   final String id;
@@ -140,7 +120,7 @@ class StoredRecording {
   final DateTime startedAt;
   final double durationSeconds;
   final List<SoundEvent> soundEvents;
-  final RecordingLabel? label;
+  final int fileSizeBytes;
 
   StoredRecording copyWith({
     String? id,
@@ -148,8 +128,7 @@ class StoredRecording {
     DateTime? startedAt,
     double? durationSeconds,
     List<SoundEvent>? soundEvents,
-    RecordingLabel? label,
-    bool clearLabel = false,
+    int? fileSizeBytes,
   }) {
     return StoredRecording(
       id: id ?? this.id,
@@ -157,7 +136,7 @@ class StoredRecording {
       startedAt: startedAt ?? this.startedAt,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       soundEvents: soundEvents ?? this.soundEvents,
-      label: clearLabel ? null : label ?? this.label,
+      fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
     );
   }
 
@@ -167,7 +146,7 @@ class StoredRecording {
     'startedAt': startedAt.toIso8601String(),
     'durationSeconds': durationSeconds,
     'soundEvents': soundEvents.map((event) => event.toJson()).toList(),
-    'label': label?.jsonValue,
+    'fileSizeBytes': fileSizeBytes,
   };
 
   static StoredRecording? tryFromJson(Object? value) {
@@ -176,6 +155,7 @@ class StoredRecording {
     final audioPath = value['audioPath'] ?? value['uri'];
     final startedAt = value['startedAt'];
     final duration = value['durationSeconds'];
+    final fileSize = value['fileSizeBytes'];
     if (id is! String ||
         id.isEmpty ||
         audioPath is! String ||
@@ -204,7 +184,7 @@ class StoredRecording {
       startedAt: parsedDate,
       durationSeconds: duration.toDouble(),
       soundEvents: events,
-      label: RecordingLabel.fromJson(value['label']),
+      fileSizeBytes: fileSize is int && fileSize >= 0 ? fileSize : 0,
     );
   }
 }

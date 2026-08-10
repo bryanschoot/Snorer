@@ -161,7 +161,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAllContent.
   ///
   /// In en, this message translates to:
-  /// **'All local audio files and labels will be permanently removed from this device.'**
+  /// **'All local audio files and entries will be permanently removed from this device.'**
   String get deleteAllContent;
 
   /// No description provided for @deleteAll.
@@ -251,7 +251,7 @@ abstract class AppLocalizations {
   /// No description provided for @detectionReady.
   ///
   /// In en, this message translates to:
-  /// **'Snoring and speech are marked locally.'**
+  /// **'Snoring and speech are detected locally.'**
   String get detectionReady;
 
   /// No description provided for @detectionLoading.
@@ -263,13 +263,13 @@ abstract class AppLocalizations {
   /// No description provided for @detectionUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Recording works, but sound labels are unavailable.'**
+  /// **'Recording works, but sound detection is unavailable.'**
   String get detectionUnavailable;
 
   /// No description provided for @detectionIdle.
   ///
   /// In en, this message translates to:
-  /// **'Sound labels are processed on this device only.'**
+  /// **'Sound detection is processed on this device only.'**
   String get detectionIdle;
 
   /// No description provided for @overviewEyebrow.
@@ -299,7 +299,7 @@ abstract class AppLocalizations {
   /// No description provided for @emptyRecordingBody.
   ///
   /// In en, this message translates to:
-  /// **'Start a sleep recording before you go to bed. After stopping, the recording and local sound labels will appear here.'**
+  /// **'Start a sleep recording before you go to bed. After stopping, the recording and detected sound events will appear here.'**
   String get emptyRecordingBody;
 
   /// No description provided for @pauseRecording.
@@ -374,6 +374,30 @@ abstract class AppLocalizations {
   /// **'Choose the app language.'**
   String get languageHint;
 
+  /// No description provided for @recordingSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording size'**
+  String get recordingSize;
+
+  /// No description provided for @recordingSizeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the unit used for recording sizes.'**
+  String get recordingSizeHint;
+
+  /// No description provided for @recordingSizeMegabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'Megabytes (MB)'**
+  String get recordingSizeMegabytes;
+
+  /// No description provided for @recordingSizeGigabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'Gigabytes (GB)'**
+  String get recordingSizeGigabytes;
+
   /// No description provided for @privacy.
   ///
   /// In en, this message translates to:
@@ -389,7 +413,7 @@ abstract class AppLocalizations {
   /// No description provided for @privacyPhoneBody.
   ///
   /// In en, this message translates to:
-  /// **'Recordings, labels, and sound analysis are stored locally. Snorer uses no account or cloud sync.'**
+  /// **'Recordings and sound analysis are stored locally. Snorer uses no account or cloud sync.'**
   String get privacyPhoneBody;
 
   /// No description provided for @privacyMicrophoneTitle.
@@ -494,23 +518,17 @@ abstract class AppLocalizations {
   /// **'English'**
   String get languageEnglish;
 
-  /// No description provided for @recordingLabelSnoring.
+  /// No description provided for @soundEventSnoring.
   ///
   /// In en, this message translates to:
   /// **'Snoring'**
-  String get recordingLabelSnoring;
+  String get soundEventSnoring;
 
-  /// No description provided for @recordingLabelSpeech.
+  /// No description provided for @soundEventSpeech.
   ///
   /// In en, this message translates to:
   /// **'Speech'**
-  String get recordingLabelSpeech;
-
-  /// No description provided for @recordingLabelNone.
-  ///
-  /// In en, this message translates to:
-  /// **'Not labeled yet'**
-  String get recordingLabelNone;
+  String get soundEventSpeech;
 
   /// The number of detected snoring moments.
   ///

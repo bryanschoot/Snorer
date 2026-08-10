@@ -100,13 +100,14 @@ class RecordingsViewModel extends ChangeNotifier {
     }
     _completedDurationSeconds = draft.durationSeconds;
 
+    final fileSizeBytes = await _repository.getAudioFileSize(draft.audioPath);
     final recording = StoredRecording(
       id: _createRecordingId(),
       audioPath: draft.audioPath,
       startedAt: draft.startedAt,
       durationSeconds: draft.durationSeconds,
       soundEvents: draft.soundEvents,
-      label: null,
+      fileSizeBytes: fileSizeBytes,
     );
     _recordings = [recording, ..._recordings];
     _selectedId = recording.id;
@@ -125,20 +126,6 @@ class RecordingsViewModel extends ChangeNotifier {
     unawaited(_loadSelectedPlayer());
   }
 
-  Future<void> toggleLabel(String id, RecordingLabel label) async {
-    _recordings = _recordings
-        .map(
-          (recording) => recording.id == id
-              ? recording.copyWith(
-                  clearLabel: recording.label == label,
-                  label: recording.label == label ? null : label,
-                )
-              : recording,
-        )
-        .toList(growable: false);
-    notifyListeners();
-    await _persist();
-  }
 
   Future<bool> deleteRecording(String id) async {
     final recording = _recordings

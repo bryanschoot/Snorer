@@ -13,6 +13,7 @@ abstract interface class RecordingRepository {
   Future<void> saveRecordings(List<StoredRecording> recordings);
   Future<String> createAudioPath(DateTime startedAt);
   Future<void> deleteAudioFile(String path);
+  Future<int> getAudioFileSize(String path);
 }
 
 class LocalRecordingRepository implements RecordingRepository {
@@ -30,7 +31,13 @@ class LocalRecordingRepository implements RecordingRepository {
           .whereType<StoredRecording>()
           .where((recording) => File(recording.audioPath).existsSync())
           .toList(growable: false);
-      return recordings;
+      return Future.wait(
+        recordings.map(
+          (recording) async => recording.copyWith(
+            fileSizeBytes: await getAudioFileSize(recording.audioPath),
+          ),
+        ),
+      );
     } on FormatException {
       return const [];
     }
@@ -53,6 +60,9 @@ class LocalRecordingRepository implements RecordingRepository {
     final stamp = startedAt.toUtc().millisecondsSinceEpoch;
     return '${recordingsDirectory.path}/snorer-$stamp.wav';
   }
+
+  @override
+  Future<int> getAudioFileSize(String path) => File(path).length();
 
   @override
   Future<void> deleteAudioFile(String path) async {

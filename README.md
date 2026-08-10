@@ -16,8 +16,7 @@ flutter build apk --release
 The app requests microphone and notification permissions before recording. A
 recording runs through an Android microphone foreground service so it can
 continue when the screen is locked. Audio is stored as a private PCM WAV file;
-YAMNet inference runs locally and stores only snoring/speech events and manual
-labels in `SharedPreferences`.
+YAMNet inference runs locally and stores only snoring/speech events in `SharedPreferences`.
 
 ## Structure
 
@@ -25,15 +24,16 @@ labels in `SharedPreferences`.
 - `lib/data/`: local metadata repository, PCM/WAV recorder, foreground service,
   TFLite model adapter, and audio playback.
 - `lib/presentation/`: `ChangeNotifier` view models, the recording interface,
-  playback controls, and settings with persisted dark, light, Hurm, Dutch, and
-  English choices.
+  playback controls, and settings with persisted dark, light, Hurm, Dutch, English,
+  and recording-size-unit choices.
 - `test/`: model, sound-detection, recording UI, playback, language, and theme
   interaction tests.
 
-The settings screen lets users choose a dark, light, or Hurm theme and switch
-between Dutch and English. These choices are stored locally and restored on the
-next launch. The playback waveform shows the current audio position and accepts
-tap-to-seek input.
+The settings screen lets users choose a dark, light, or Hurm theme, switch between
+Dutch and English, and choose whether recording sizes are shown in MB or GB. These
+choices are stored locally and restored on the next launch. Each recording entry
+shows the size of its local audio file. The playback waveform shows the current
+audio position and accepts tap-to-seek input.
 
 The release build falls back to Flutter's debug signing configuration when no
 keystore is provided. This produces an installable APK for testing and GitHub

@@ -4,32 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:snorer/app.dart';
 import 'package:snorer/core/localization/snorer_language.dart';
+import 'package:snorer/core/recording_size_unit.dart';
 import 'package:snorer/core/theme/app_theme.dart';
 import 'package:snorer/data/repositories/recording_repository.dart';
 import 'package:snorer/data/services/audio_playback_service.dart';
 import 'package:snorer/data/services/audio_recording_service.dart';
 import 'package:snorer/data/services/app_update_service.dart';
+import 'package:snorer/data/services/recording_size_preferences.dart';
 import 'package:snorer/data/services/language_preferences.dart';
 import 'package:snorer/data/services/theme_preferences.dart';
 import 'package:snorer/domain/models/recording.dart';
 import 'package:snorer/presentation/recordings/recordings_screen.dart';
 import 'package:snorer/presentation/recordings/recordings_view_model.dart';
+import 'package:snorer/presentation/settings/recording_size_controller.dart';
 import 'package:snorer/presentation/update/update_controller.dart';
 import 'package:snorer/presentation/settings/language_controller.dart';
 import 'package:snorer/presentation/settings/settings_screen.dart';
 import 'package:snorer/presentation/settings/theme_controller.dart';
 
 void main() {
-  testWidgets('shows a local recording and changes its manual label', (
-    tester,
-  ) async {
+  testWidgets('shows a local recording with its file size', (tester) async {
     final recording = StoredRecording(
       id: 'night-1',
       audioPath: '/tmp/night-1.wav',
       startedAt: DateTime.parse('2026-08-07T22:30:00Z'),
       durationSeconds: 185,
       soundEvents: const [],
-      label: null,
+      fileSizeBytes: 2000000,
     );
     final viewModel = _createViewModel([recording]);
 
@@ -54,16 +55,7 @@ void main() {
       scrollable: scrollable,
     );
     expect(find.text('3m 05s'), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.text('Snurken'),
-      300,
-      scrollable: scrollable,
-    );
-    await tester.tap(find.text('Snurken'));
-    await tester.pump();
-
-    expect(viewModel.recordings.single.label, RecordingLabel.snoring);
+    expect(find.text('3m 05s · 2 MB'), findsNWidgets(2));
   });
   testWidgets('keeps recordings below system bars', (tester) async {
     await tester.pumpWidget(
@@ -91,7 +83,6 @@ void main() {
       startedAt: DateTime.parse('2026-08-07T22:30:00Z'),
       durationSeconds: 185,
       soundEvents: const [],
-      label: null,
     );
     final player = _FakePlayer();
     final viewModel = _createViewModel([recording], player: player);
@@ -157,7 +148,6 @@ void main() {
           confidence: 0.8,
         ),
       ],
-      label: null,
     );
     final player = _FakePlayer();
     final viewModel = _createViewModel([recording], player: player);
@@ -316,6 +306,9 @@ void main() {
     final languageController = LanguageController(
       preferences: _MemoryLanguagePreferences(),
     );
+    final recordingSizeController = RecordingSizeController(
+      preferences: _MemoryRecordingSizePreferences(),
+    );
     await themeController.initialize();
     await languageController.initialize();
 
@@ -324,8 +317,9 @@ void main() {
         viewModel: _createViewModel(const []),
         themeController: themeController,
         languageController: languageController,
-        appVersion: '0.2.18',
-        appBuild: '20',
+        recordingSizeController: recordingSizeController,
+        appVersion: '0.2.19',
+        appBuild: '21',
       ),
     );
     await tester.pumpAndSettle();
@@ -367,6 +361,15 @@ class _MemoryLanguagePreferences implements LanguagePreferences {
   Future<void> save(SnorerLanguage language) async {}
 }
 
+class _MemoryRecordingSizePreferences
+    implements RecordingSizePreferences {
+  @override
+  Future<RecordingSizeUnit> load() async => RecordingSizeUnit.megabytes;
+
+  @override
+  Future<void> save(RecordingSizeUnit unit) async {}
+}
+
 class _FakeRepository implements RecordingRepository {
   _FakeRepository(this._recordings);
 
@@ -384,6 +387,8 @@ class _FakeRepository implements RecordingRepository {
 
   @override
   Future<void> deleteAudioFile(String path) async {}
+  @override
+  Future<int> getAudioFileSize(String path) async => 0;
 }
 
 class _FakeRecorder implements AudioRecordingService {

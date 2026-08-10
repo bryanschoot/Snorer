@@ -7,6 +7,7 @@ import 'core/theme/app_theme.dart';
 import 'presentation/recordings/recordings_screen.dart';
 import 'presentation/recordings/recordings_view_model.dart';
 import 'presentation/settings/language_controller.dart';
+import 'presentation/settings/recording_size_controller.dart';
 import 'presentation/settings/settings_screen.dart';
 import 'presentation/settings/theme_controller.dart';
 import 'presentation/update/update_controller.dart';
@@ -17,6 +18,7 @@ class SnorerApp extends StatelessWidget {
     required this.viewModel,
     required this.themeController,
     required this.languageController,
+    required this.recordingSizeController,
     required this.appVersion,
     required this.appBuild,
     this.updateController,
@@ -27,12 +29,17 @@ class SnorerApp extends StatelessWidget {
   final LanguageController languageController;
   final UpdateController? updateController;
   final String appVersion;
+  final RecordingSizeController recordingSizeController;
   final String appBuild;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([themeController, languageController]),
+      listenable: Listenable.merge([
+        themeController,
+        languageController,
+        recordingSizeController,
+      ]),
       builder: (context, _) => MaterialApp(
         title: 'Snorer',
         debugShowCheckedModeBanner: false,
@@ -48,12 +55,14 @@ class SnorerApp extends StatelessWidget {
         home: Builder(
           builder: (context) => RecordingsScreen(
             viewModel: viewModel,
+            recordingSizeController: recordingSizeController,
             updateController: updateController,
             onOpenSettings: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => SettingsScreen(
                   themeController: themeController,
                   languageController: languageController,
+                  recordingSizeController: recordingSizeController,
                   appVersion: appVersion,
                   appBuild: appBuild,
                   updateController: updateController,

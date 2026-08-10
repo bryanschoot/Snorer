@@ -17,7 +17,7 @@ void main() {
           confidence: 0.77,
         ),
       ],
-      label: RecordingLabel.snoring,
+      fileSizeBytes: 2500000,
     );
 
     final decoded = StoredRecording.tryFromJson(original.toJson());
@@ -27,7 +27,7 @@ void main() {
     expect(decoded.audioPath, original.audioPath);
     expect(decoded.durationSeconds, original.durationSeconds);
     expect(decoded.soundEvents.single.kind, SoundEventKind.snoring);
-    expect(decoded.label, RecordingLabel.snoring);
+    expect(decoded.fileSizeBytes, 2500000);
   });
 
   test('accepts the archived uri field and drops malformed events', () {
@@ -52,7 +52,7 @@ void main() {
     expect(decoded!.audioPath, '/tmp/legacy.wav');
     expect(decoded.soundEvents, hasLength(1));
     expect(decoded.soundEvents.single.kind, SoundEventKind.speech);
-    expect(decoded.label, isNull);
+    expect(decoded.fileSizeBytes, 0);
   });
 
   test('rejects records with invalid identity or duration', () {

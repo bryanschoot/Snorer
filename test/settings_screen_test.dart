@@ -5,10 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:snorer/core/localization/snorer_language.dart';
 import 'package:snorer/core/localization/snorer_localizations.dart';
 import 'package:snorer/core/theme/app_theme.dart';
+import 'package:snorer/core/recording_size_unit.dart';
 import 'package:snorer/data/services/language_preferences.dart';
 import 'package:snorer/data/services/app_update_service.dart';
+import 'package:snorer/data/services/recording_size_preferences.dart';
 import 'package:snorer/data/services/theme_preferences.dart';
 import 'package:snorer/presentation/settings/language_controller.dart';
+import 'package:snorer/presentation/settings/recording_size_controller.dart';
 import 'package:snorer/presentation/settings/settings_screen.dart';
 import 'package:snorer/presentation/update/update_controller.dart';
 import 'package:snorer/presentation/settings/theme_controller.dart';
@@ -20,8 +23,12 @@ void main() {
     final languageController = LanguageController(
       preferences: _MemoryLanguagePreferences(),
     );
+    final recordingSizeController = RecordingSizeController(
+      preferences: _MemoryRecordingSizePreferences(),
+    );
     await controller.initialize();
     await languageController.initialize();
+    await recordingSizeController.initialize();
     await tester.pumpWidget(
       ListenableBuilder(
         listenable: controller,
@@ -30,8 +37,9 @@ void main() {
           home: SettingsScreen(
             themeController: controller,
             languageController: languageController,
-            appVersion: '0.2.18',
-            appBuild: '20',
+            recordingSizeController: recordingSizeController,
+            appVersion: '0.2.19',
+            appBuild: '21',
           ),
         ),
       ),
@@ -56,8 +64,8 @@ void main() {
       scrollable: find.byType(Scrollable),
     );
     expect(find.byKey(const Key('about_author')), findsOneWidget);
-    expect(find.text('0.2.18'), findsOneWidget);
-    expect(find.text('20'), findsOneWidget);
+    expect(find.text('0.2.19'), findsOneWidget);
+    expect(find.text('21'), findsOneWidget);
   });
 
   test('restores the persisted light theme', () async {
@@ -77,8 +85,12 @@ void main() {
     final themeController = ThemeController(
       preferences: _MemoryThemePreferences(),
     );
+    final recordingSizeController = RecordingSizeController(
+      preferences: _MemoryRecordingSizePreferences(),
+    );
     await languageController.initialize();
     await themeController.initialize();
+    await recordingSizeController.initialize();
 
     await tester.pumpWidget(
       ListenableBuilder(
@@ -96,8 +108,9 @@ void main() {
           home: SettingsScreen(
             themeController: themeController,
             languageController: languageController,
-            appVersion: '0.2.18',
-            appBuild: '20',
+            recordingSizeController: recordingSizeController,
+            appVersion: '0.2.19',
+            appBuild: '21',
           ),
         ),
       ),
@@ -112,6 +125,61 @@ void main() {
     expect(languageController.language, SnorerLanguage.english);
     expect(languagePreferences.savedLanguage, SnorerLanguage.english);
     expect(find.text('Settings'), findsOneWidget);
+  });
+
+  testWidgets('switches and persists the recording size unit', (tester) async {
+    final recordingSizePreferences = _MemoryRecordingSizePreferences();
+    final recordingSizeController = RecordingSizeController(
+      preferences: recordingSizePreferences,
+    );
+    final themeController = ThemeController(
+      preferences: _MemoryThemePreferences(),
+    );
+    final languageController = LanguageController(
+      preferences: _MemoryLanguagePreferences(),
+    );
+    await recordingSizeController.initialize();
+    await themeController.initialize();
+    await languageController.initialize();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [
+          SnorerLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: SnorerLocalizations.supportedLocales,
+        theme: buildSnorerTheme(),
+        home: SettingsScreen(
+          themeController: themeController,
+          languageController: languageController,
+          recordingSizeController: recordingSizeController,
+          appVersion: '0.2.19',
+          appBuild: '21',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('recording_size_option_gigabytes')),
+      400,
+      scrollable: find.byType(Scrollable),
+    );
+    await tester.tap(find.byKey(const Key('recording_size_option_gigabytes')));
+    await tester.pumpAndSettle();
+
+    expect(recordingSizeController.unit, RecordingSizeUnit.gigabytes);
+    expect(
+      recordingSizePreferences.savedUnit,
+      RecordingSizeUnit.gigabytes,
+    );
+    expect(
+      find.byKey(const Key('recording_size_selected_gigabytes')),
+      findsOneWidget,
+    );
   });
 
   test('serializes rapid theme changes and keeps the latest choice', () async {
@@ -163,8 +231,12 @@ void main() {
     final languageController = LanguageController(
       preferences: _MemoryLanguagePreferences(),
     );
+    final recordingSizeController = RecordingSizeController(
+      preferences: _MemoryRecordingSizePreferences(),
+    );
     await themeController.initialize();
     await languageController.initialize();
+    await recordingSizeController.initialize();
 
     await tester.pumpWidget(
       MaterialApp(
@@ -172,8 +244,9 @@ void main() {
         home: SettingsScreen(
           themeController: themeController,
           languageController: languageController,
-          appVersion: '0.2.18',
-          appBuild: '20',
+          recordingSizeController: recordingSizeController,
+          appVersion: '0.2.19',
+          appBuild: '21',
           updateController: updateController,
         ),
       ),
@@ -251,6 +324,25 @@ class _MemoryLanguagePreferences implements LanguagePreferences {
   Future<void> save(SnorerLanguage language) async {
     _language = language;
     savedLanguage = language;
+  }
+}
+
+class _MemoryRecordingSizePreferences
+    implements RecordingSizePreferences {
+  _MemoryRecordingSizePreferences({
+    RecordingSizeUnit initial = RecordingSizeUnit.megabytes,
+  }) : _unit = initial;
+
+  RecordingSizeUnit _unit;
+  RecordingSizeUnit? savedUnit;
+
+  @override
+  Future<RecordingSizeUnit> load() async => _unit;
+
+  @override
+  Future<void> save(RecordingSizeUnit unit) async {
+    _unit = unit;
+    savedUnit = unit;
   }
 }
 

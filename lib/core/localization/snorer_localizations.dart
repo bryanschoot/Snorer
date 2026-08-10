@@ -3,6 +3,7 @@ import 'package:intl/date_symbol_data_local.dart' as date_data;
 import 'package:intl/intl.dart' as intl;
 
 import '../../domain/models/recording.dart';
+import '../recording_size_unit.dart';
 import '../errors/snorer_error.dart';
 import '../theme/app_theme.dart';
 import 'app_localizations.dart';
@@ -23,12 +24,11 @@ extension SnorerAppLocalizations on AppLocalizations {
     SoundEventKind.snoring => snoringMoments(count),
     SoundEventKind.speech => speechMoments(count),
   };
-
-  String recordingLabel(RecordingLabel? label) => switch (label) {
-    RecordingLabel.snoring => recordingLabelSnoring,
-    RecordingLabel.sleepTalking => recordingLabelSpeech,
-    null => recordingLabelNone,
+  String recordingSizeUnitLabel(RecordingSizeUnit unit) => switch (unit) {
+    RecordingSizeUnit.megabytes => recordingSizeMegabytes,
+    RecordingSizeUnit.gigabytes => recordingSizeGigabytes,
   };
+
 
   String themeLabel(SnorerThemeMode mode) => switch (mode) {
     SnorerThemeMode.dark => themeDark,
@@ -59,6 +59,13 @@ extension SnorerAppLocalizations on AppLocalizations {
     }
     return '$minutes$durationMinutesUnit '
         '${remainder.toString().padLeft(2, '0')}$durationSecondsUnit';
+  }
+
+  String formatFileSize(int bytes, RecordingSizeUnit unit) {
+    final safeBytes = bytes < 0 ? 0 : bytes;
+    final value = safeBytes / unit.bytesPerUnit;
+    final formatted = intl.NumberFormat('0.##', localeName).format(value);
+    return '$formatted ${unit.symbol}';
   }
 
   String formatDate(DateTime value) {
