@@ -38,8 +38,8 @@ void main() {
             themeController: controller,
             languageController: languageController,
             recordingSizeController: recordingSizeController,
-            appVersion: '0.2.23',
-            appBuild: '25',
+            appVersion: '0.2.24',
+            appBuild: '26',
           ),
         ),
       ),
@@ -64,8 +64,8 @@ void main() {
       scrollable: find.byType(Scrollable),
     );
     expect(find.byKey(const Key('about_author')), findsOneWidget);
-    expect(find.text('0.2.23'), findsOneWidget);
-    expect(find.text('25'), findsOneWidget);
+    expect(find.text('0.2.24'), findsOneWidget);
+    expect(find.text('26'), findsOneWidget);
   });
 
   test('restores the persisted light theme', () async {
@@ -109,8 +109,8 @@ void main() {
             themeController: themeController,
             languageController: languageController,
             recordingSizeController: recordingSizeController,
-            appVersion: '0.2.23',
-            appBuild: '25',
+            appVersion: '0.2.24',
+            appBuild: '26',
           ),
         ),
       ),
@@ -156,8 +156,8 @@ void main() {
           themeController: themeController,
           languageController: languageController,
           recordingSizeController: recordingSizeController,
-          appVersion: '0.2.23',
-          appBuild: '25',
+          appVersion: '0.2.24',
+          appBuild: '26',
         ),
       ),
     );
@@ -245,8 +245,8 @@ void main() {
           themeController: themeController,
           languageController: languageController,
           recordingSizeController: recordingSizeController,
-          appVersion: '0.2.23',
-          appBuild: '25',
+          appVersion: '0.2.24',
+          appBuild: '26',
           updateController: updateController,
         ),
       ),

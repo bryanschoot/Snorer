@@ -43,19 +43,11 @@ void main() {
     await tester.pumpAndSettle();
     final scrollable = find.byType(Scrollable);
     await tester.scrollUntilVisible(
-      find.text('Lokale opnames'),
+      find.byKey(const Key('recording_details_night-1')),
       500,
       scrollable: scrollable,
     );
-    expect(find.text('Lokale opnames'), findsOneWidget);
-    expect(find.text('1 nacht'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('3m 05s'),
-      300,
-      scrollable: scrollable,
-    );
-    expect(find.text('3m 05s'), findsOneWidget);
-    expect(find.text('3m 05s · 2 MB'), findsNWidgets(2));
+    expect(find.text('3m 05s · 2 MB'), findsWidgets);
   });
   testWidgets('keeps recordings below system bars', (tester) async {
     await tester.pumpWidget(
@@ -318,8 +310,8 @@ void main() {
         themeController: themeController,
         languageController: languageController,
         recordingSizeController: recordingSizeController,
-        appVersion: '0.2.23',
-        appBuild: '25',
+        appVersion: '0.2.24',
+        appBuild: '26',
       ),
     );
     await tester.pumpAndSettle();

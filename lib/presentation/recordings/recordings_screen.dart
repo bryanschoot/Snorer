@@ -798,6 +798,7 @@ class _RecordingWaveformCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
+                        key: Key('recording_details_${recording.id}'),
                         '${strings.formatDuration(recording.durationSeconds)} · '
                         '${strings.formatFileSize(recording.fileSizeBytes, sizeUnit)}',
                         style: TextStyle(color: colors.muted, fontSize: 13),
