@@ -5,6 +5,7 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'app.dart';
+import 'core/theme/app_theme.dart';
 import 'data/repositories/recording_repository.dart';
 import 'data/services/app_update_service.dart';
 import 'data/services/audio_playback_service.dart';
@@ -46,6 +47,16 @@ Future<void> main() async {
   await themeController.initialize();
   await languageController.initialize();
   await recordingSizeController.initialize();
+
+  void syncNotificationTheme() {
+    final palette = buildSnorerTheme(
+      themeController.mode,
+    ).extension<SnorerThemePalette>()!;
+    foregroundController.setNotificationAccent(palette.primary);
+  }
+
+  syncNotificationTheme();
+  themeController.addListener(syncNotificationTheme);
   foregroundController.setLanguage(languageController.language);
   languageController.addListener(() {
     foregroundController.setLanguage(languageController.language);

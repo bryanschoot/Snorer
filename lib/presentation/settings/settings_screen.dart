@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/recording_size_unit.dart';
 import '../update/update_card.dart';
 import '../update/update_controller.dart';
+import '../widgets/snorer_logo.dart';
 import 'language_controller.dart';
 import 'recording_size_controller.dart';
 import 'theme_controller.dart';
@@ -51,11 +52,7 @@ class SettingsScreen extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SettingsIcon(
-                    icon: Icons.nightlight_round,
-                    colors: colors,
-                    emphasized: true,
-                  ),
+                  const SnorerLogo(size: 50),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
@@ -63,9 +60,7 @@ class SettingsScreen extends StatelessWidget {
                       children: [
                         Text(
                           strings.settingsIntroTitle,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 6),
@@ -100,6 +95,11 @@ class SettingsScreen extends StatelessWidget {
                     },
                     child: Column(
                       children: [
+                        const Padding(
+                          key: Key('theme_logo_preview'),
+                          padding: EdgeInsets.fromLTRB(0, 8, 0, 16),
+                          child: Center(child: SnorerLogo(size: 80)),
+                        ),
                         for (final mode in SnorerThemeMode.values)
                           _ThemeOption(
                             mode: mode,
@@ -263,10 +263,7 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: _SettingsIcon(
-                        icon: Icons.nightlight_round,
-                        colors: colors,
-                      ),
+                      leading: const SnorerLogo(size: 44),
                       title: Text(strings.aboutTitle),
                       subtitle: Text(strings.aboutBody),
                     ),
@@ -451,7 +448,6 @@ class _LanguageOption extends StatelessWidget {
   }
 }
 
-
 class _RecordingSizeOption extends StatelessWidget {
   const _RecordingSizeOption({
     required this.unit,
@@ -584,21 +580,16 @@ class _SettingsSectionTitle extends StatelessWidget {
 }
 
 class _SettingsIcon extends StatelessWidget {
-  const _SettingsIcon({
-    required this.icon,
-    required this.colors,
-    this.emphasized = false,
-  });
+  const _SettingsIcon({required this.icon, required this.colors});
 
   final IconData icon;
   final SnorerThemePalette colors;
-  final bool emphasized;
 
   @override
   Widget build(BuildContext context) => CircleAvatar(
-    radius: emphasized ? 25 : 20,
-    backgroundColor: emphasized ? colors.primary : colors.surfaceSoft,
-    foregroundColor: emphasized ? colors.onPrimary : colors.primary,
-    child: Icon(icon, size: emphasized ? 25 : 20),
+    radius: 20,
+    backgroundColor: colors.surfaceSoft,
+    foregroundColor: colors.primary,
+    child: Icon(icon, size: 20),
   );
 }

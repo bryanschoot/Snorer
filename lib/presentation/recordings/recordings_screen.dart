@@ -13,6 +13,7 @@ import '../../domain/services/recording_utils.dart';
 import 'recordings_view_model.dart';
 import '../settings/recording_size_controller.dart';
 import '../update/update_controller.dart';
+import '../widgets/snorer_logo.dart';
 
 class RecordingsScreen extends StatefulWidget {
   const RecordingsScreen({
@@ -229,19 +230,7 @@ class _AppHeader extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: colors.primary,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(
-                  Icons.nightlight_round,
-                  color: colors.onPrimary,
-                  size: 22,
-                ),
-              ),
+              const SnorerLogo(size: 38),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -602,7 +591,6 @@ class _RecorderCard extends StatelessWidget {
   }
 }
 
-
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.count});
 
@@ -748,8 +736,9 @@ class _RecordingWaveformCard extends StatelessWidget {
         : recording.durationSeconds > 0
         ? recording.durationSeconds
         : 1.0;
-    final timelineProgress =
-        (playback.currentSeconds / timelineDuration).clamp(0, 1).toDouble();
+    final timelineProgress = (playback.currentSeconds / timelineDuration)
+        .clamp(0, 1)
+        .toDouble();
     final displayedWaveform = playback.waveform.isNotEmpty
         ? playback.waveform
         : _placeholderWaveform;
@@ -888,7 +877,6 @@ class _RecordingWaveformCard extends StatelessWidget {
   }
 }
 
-
 class _SoundEventStepper extends StatefulWidget {
   const _SoundEventStepper({
     required this.events,
@@ -909,18 +897,14 @@ class _SoundEventStepperState extends State<_SoundEventStepper> {
 
   List<SoundEvent> get _filteredEvents {
     final events = widget.events
-        .where(
-          (event) => _filterKind == null || event.kind == _filterKind,
-        )
+        .where((event) => _filterKind == null || event.kind == _filterKind)
         .toList();
     events.sort((a, b) => a.startSeconds.compareTo(b.startSeconds));
     return events;
   }
 
   int _activeIndex(List<SoundEvent> events) {
-    final position = widget.currentSeconds.isFinite
-        ? widget.currentSeconds
-        : 0;
+    final position = widget.currentSeconds.isFinite ? widget.currentSeconds : 0;
     var activeIndex = -1;
     for (var index = 0; index < events.length; index += 1) {
       if (events[index].startSeconds > position + 0.05) break;
@@ -1193,25 +1177,22 @@ class _WaveformPainter extends CustomPainter {
       final end = (index + 1) / waveform.length * durationSeconds;
       final eventColor = _eventColor(start, end);
       final played = (index + 0.5) / waveform.length <= progress;
-      final color = eventColor ??
+      final color =
+          eventColor ??
           (played ? colors.primary : colors.waveInactive).withValues(
             alpha: played ? 1 : 0.72,
           );
       final rect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          left,
-          (size.height - height) / 2,
-          barWidth,
-          height,
-        ),
+        Rect.fromLTWH(left, (size.height - height) / 2, barWidth, height),
         const Radius.circular(8),
       );
       canvas.drawRRect(rect, Paint()..color = color);
     }
 
     for (final event in events) {
-      final markerProgress =
-          (event.startSeconds / durationSeconds).clamp(0, 1).toDouble();
+      final markerProgress = (event.startSeconds / durationSeconds)
+          .clamp(0, 1)
+          .toDouble();
       final markerColor = event.kind == SoundEventKind.snoring
           ? colors.danger
           : colors.warning;
@@ -1343,63 +1324,63 @@ class _RecordingListTile extends StatelessWidget {
           Material(
             type: MaterialType.transparency,
             child: InkWell(
-            key: Key('select_recording_${recording.id}'),
-            onTap: onSelect,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-              child: Row(
-                children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: selected ? colors.primary : colors.border,
-                        width: 2,
+              key: Key('select_recording_${recording.id}'),
+              onTap: onSelect,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: selected ? colors.primary : colors.border,
+                          width: 2,
+                        ),
+                      ),
+                      child: selected
+                          ? Center(
+                              child: CircleAvatar(
+                                radius: 5,
+                                backgroundColor: colors.primary,
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: 0,
+                        maxWidth: 145,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            strings.formatDate(recording.startedAt),
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colors.text,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${strings.formatDuration(recording.durationSeconds)} · '
+                            '${strings.formatFileSize(recording.fileSizeBytes, sizeUnit)}',
+                            style: TextStyle(color: colors.muted, fontSize: 12),
+                          ),
+                        ],
                       ),
                     ),
-                    child: selected
-                        ? Center(
-                            child: CircleAvatar(
-                              radius: 5,
-                              backgroundColor: colors.primary,
-                            ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 10),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minWidth: 0,
-                      maxWidth: 145,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          strings.formatDate(recording.startedAt),
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: colors.text,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          '${strings.formatDuration(recording.durationSeconds)} · '
-                          '${strings.formatFileSize(recording.fileSizeBytes, sizeUnit)}',
-                          style: TextStyle(color: colors.muted, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
           ),
           const Spacer(),
           Wrap(
@@ -1419,7 +1400,6 @@ class _RecordingListTile extends StatelessWidget {
     );
   }
 }
-
 
 class _ErrorCard extends StatelessWidget {
   const _ErrorCard({required this.error});
