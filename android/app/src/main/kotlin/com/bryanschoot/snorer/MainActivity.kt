@@ -10,8 +10,14 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
+    private val audioDecoder by lazy { AudioPcmDecoder(applicationContext) }
+    private val audioDecoderExecutor: ExecutorService =
+        Executors.newSingleThreadExecutor()
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(
@@ -75,10 +81,47 @@ class MainActivity : FlutterActivity() {
                 result.error("INSTALLER_UNAVAILABLE", error.message, null)
             }
         }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            AUDIO_DECODER_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            if (call.method != "decodeToPcm") {
+                result.notImplemented()
+                return@setMethodCallHandler
+            }
+
+            val path = call.argument<String>("path")
+            if (path == null) {
+                result.error("INVALID_AUDIO_PATH", "Audio path is missing.", null)
+                return@setMethodCallHandler
+            }
+
+            audioDecoderExecutor.execute {
+                try {
+                    val decoded = audioDecoder.decode(path)
+                    runOnUiThread { result.success(decoded) }
+                } catch (error: Exception) {
+                    runOnUiThread {
+                        result.error(
+                            "AUDIO_DECODE_FAILED",
+                            error.message ?: "Audio decoding failed.",
+                            null,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        audioDecoderExecutor.shutdownNow()
+        super.onDestroy()
     }
 
     companion object {
         private const val INSTALLER_CHANNEL =
             "com.bryanschoot.snorer/installer"
+        private const val AUDIO_DECODER_CHANNEL =
+            "com.bryanschoot.snorer/audio_decoder"
     }
 }
