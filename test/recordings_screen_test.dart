@@ -318,8 +318,8 @@ void main() {
         themeController: themeController,
         languageController: languageController,
         recordingSizeController: recordingSizeController,
-        appVersion: '0.2.19',
-        appBuild: '21',
+        appVersion: '0.2.20',
+        appBuild: '22',
       ),
     );
     await tester.pumpAndSettle();

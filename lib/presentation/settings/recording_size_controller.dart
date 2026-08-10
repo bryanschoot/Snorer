@@ -4,8 +4,7 @@ import '../../core/recording_size_unit.dart';
 import '../../data/services/recording_size_preferences.dart';
 
 class RecordingSizeController extends ChangeNotifier {
-  RecordingSizeController({required RecordingSizePreferences preferences})
-    : _preferences = preferences;
+  RecordingSizeController({required this._preferences});
 
   final RecordingSizePreferences _preferences;
   Future<void> _saveQueue = Future<void>.value();
