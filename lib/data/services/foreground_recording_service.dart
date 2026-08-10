@@ -1,13 +1,24 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 import '../../core/localization/snorer_language.dart';
 import '../../core/localization/app_localizations.dart';
 
+const _notificationIconMetadataName =
+    'com.bryanschoot.snorer.NOTIFICATION_ICON';
+
+NotificationIcon buildSnorerNotificationIcon(Color accent) => NotificationIcon(
+  metaDataName: _notificationIconMetadataName,
+  backgroundColor: accent,
+);
+
 abstract interface class ForegroundRecordingController {
   Future<void> initialize();
   void setLanguage(SnorerLanguage language);
+  void setNotificationAccent(Color color);
   Future<void> start();
   Future<void> stop();
 }
@@ -21,6 +32,9 @@ class NoopForegroundRecordingController
   void setLanguage(SnorerLanguage language) {}
 
   @override
+  void setNotificationAccent(Color color) {}
+
+  @override
   Future<void> start() async {}
 
   @override
@@ -32,10 +46,18 @@ class AndroidForegroundRecordingController
   static const _serviceId = 3801;
   bool _initialized = false;
   SnorerLanguage _language = SnorerLanguage.dutch;
+  Color _notificationAccent = const Color(0xFF5ED0C0);
 
   @override
   void setLanguage(SnorerLanguage language) {
     _language = language;
+  }
+
+  @override
+  void setNotificationAccent(Color color) {
+    if (_notificationAccent == color) return;
+    _notificationAccent = color;
+    if (_initialized) unawaited(_updateNotificationIcon());
   }
 
   @override
@@ -62,6 +84,19 @@ class AndroidForegroundRecordingController
     _initialized = true;
   }
 
+  NotificationIcon get _notificationIcon =>
+      buildSnorerNotificationIcon(_notificationAccent);
+
+  Future<void> _updateNotificationIcon() async {
+    try {
+      if (await FlutterForegroundTask.isRunningService) {
+        await FlutterForegroundTask.updateService(
+          notificationIcon: _notificationIcon,
+        );
+      }
+    } catch (_) {}
+  }
+
   Future<void> _requestPermissions() async {
     if (!Platform.isAndroid) return;
     final notificationPermission =
@@ -82,6 +117,7 @@ class AndroidForegroundRecordingController
       serviceId: _serviceId,
       notificationTitle: strings.notificationTitle,
       notificationText: strings.notificationText,
+      notificationIcon: _notificationIcon,
       serviceTypes: const [ForegroundServiceTypes.microphone],
       callback: startForegroundTaskCallback,
     );

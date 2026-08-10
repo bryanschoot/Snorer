@@ -51,6 +51,9 @@
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="microphone"
             android:exported="false" />
+        <meta-data
+            android:name="com.bryanschoot.snorer.NOTIFICATION_ICON"
+            android:resource="@drawable/ic_stat_snorer" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

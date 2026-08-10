@@ -46,6 +46,7 @@ void main() {
     );
 
     expect(find.text('Donker'), findsOneWidget);
+    expect(find.byKey(const Key('theme_logo_preview')), findsOneWidget);
     await tester.tap(find.byKey(const Key('theme_option_pink')));
     await tester.pumpAndSettle();
 
@@ -163,19 +164,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final gigabytesOption = find.byKey(
+      const Key('recording_size_option_gigabytes'),
+    );
     await tester.scrollUntilVisible(
-      find.byKey(const Key('recording_size_option_gigabytes')),
+      gigabytesOption,
       400,
       scrollable: find.byType(Scrollable),
     );
-    await tester.tap(find.byKey(const Key('recording_size_option_gigabytes')));
+    await tester.ensureVisible(gigabytesOption);
+    await tester.pumpAndSettle();
+    await tester.tap(gigabytesOption);
     await tester.pumpAndSettle();
 
     expect(recordingSizeController.unit, RecordingSizeUnit.gigabytes);
-    expect(
-      recordingSizePreferences.savedUnit,
-      RecordingSizeUnit.gigabytes,
-    );
+    expect(recordingSizePreferences.savedUnit, RecordingSizeUnit.gigabytes);
     expect(
       find.byKey(const Key('recording_size_selected_gigabytes')),
       findsOneWidget,
@@ -259,19 +262,13 @@ void main() {
       500,
       scrollable: scrollable,
     );
-    await tester.drag(
-      find.byType(ListView),
-      const Offset(0, -180),
-    );
+    await tester.drag(find.byType(ListView), const Offset(0, -180));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('check_for_updates')));
     await tester.pumpAndSettle();
 
     expect(service.checks, 1);
-    expect(
-      updateController.status,
-      UpdateCheckStatus.updateAvailable,
-    );
+    expect(updateController.status, UpdateCheckStatus.updateAvailable);
     expect(find.byKey(const Key('install_update')), findsOneWidget);
     expect(find.byKey(const Key('open_update_release')), findsOneWidget);
 
@@ -299,6 +296,7 @@ class _MemoryThemePreferences implements ThemePreferences {
     savedMode = mode;
   }
 }
+
 class _SlowThemePreferences implements ThemePreferences {
   final savedModes = <SnorerThemeMode>[];
   final gates = <Completer<void>>[];
@@ -332,8 +330,7 @@ class _MemoryLanguagePreferences implements LanguagePreferences {
   }
 }
 
-class _MemoryRecordingSizePreferences
-    implements RecordingSizePreferences {
+class _MemoryRecordingSizePreferences implements RecordingSizePreferences {
   _MemoryRecordingSizePreferences({
     RecordingSizeUnit initial = RecordingSizeUnit.megabytes,
   }) : _unit = initial;
@@ -363,6 +360,7 @@ class _FakeUpdateService implements AppUpdateService {
     checks += 1;
     return release;
   }
+
   @override
   Future<ApkInstallResult> install(AppRelease release) async {
     installs += 1;
