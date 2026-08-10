@@ -38,8 +38,8 @@ void main() {
             themeController: controller,
             languageController: languageController,
             recordingSizeController: recordingSizeController,
-            appVersion: '0.2.21',
-            appBuild: '23',
+            appVersion: '0.2.22',
+            appBuild: '24',
           ),
         ),
       ),
@@ -64,8 +64,8 @@ void main() {
       scrollable: find.byType(Scrollable),
     );
     expect(find.byKey(const Key('about_author')), findsOneWidget);
-    expect(find.text('0.2.21'), findsOneWidget);
-    expect(find.text('23'), findsOneWidget);
+    expect(find.text('0.2.22'), findsOneWidget);
+    expect(find.text('24'), findsOneWidget);
   });
 
   test('restores the persisted light theme', () async {
@@ -109,8 +109,8 @@ void main() {
             themeController: themeController,
             languageController: languageController,
             recordingSizeController: recordingSizeController,
-            appVersion: '0.2.21',
-            appBuild: '23',
+            appVersion: '0.2.22',
+            appBuild: '24',
           ),
         ),
       ),
@@ -156,8 +156,8 @@ void main() {
           themeController: themeController,
           languageController: languageController,
           recordingSizeController: recordingSizeController,
-          appVersion: '0.2.21',
-          appBuild: '23',
+          appVersion: '0.2.22',
+          appBuild: '24',
         ),
       ),
     );
@@ -245,15 +245,25 @@ void main() {
           themeController: themeController,
           languageController: languageController,
           recordingSizeController: recordingSizeController,
-          appVersion: '0.2.21',
-          appBuild: '23',
+          appVersion: '0.2.22',
+          appBuild: '24',
           updateController: updateController,
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byKey(const Key('check_for_updates')));
+    final scrollable = find.byType(Scrollable);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('check_for_updates')),
+      500,
+      scrollable: scrollable,
+    );
+    await tester.drag(
+      find.byType(ListView),
+      const Offset(0, -180),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('check_for_updates')));
     await tester.pumpAndSettle();
 

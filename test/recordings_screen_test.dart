@@ -41,12 +41,17 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final scrollable = find.byKey(const Key('recordings_scroll_view'));
+    final scrollable = find.byType(Scrollable);
     await tester.scrollUntilVisible(
       find.text('Lokale opnames'),
       500,
       scrollable: scrollable,
     );
+    await tester.drag(
+      find.byType(ListView),
+      const Offset(0, -180),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Lokale opnames'), findsOneWidget);
     expect(find.text('1 nacht'), findsOneWidget);
     await tester.scrollUntilVisible(
@@ -318,8 +323,8 @@ void main() {
         themeController: themeController,
         languageController: languageController,
         recordingSizeController: recordingSizeController,
-        appVersion: '0.2.21',
-        appBuild: '23',
+        appVersion: '0.2.22',
+        appBuild: '24',
       ),
     );
     await tester.pumpAndSettle();
